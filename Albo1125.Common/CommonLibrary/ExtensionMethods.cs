@@ -12,13 +12,23 @@ using System.IO;
 
 namespace Albo1125.Common.CommonLibrary
 {
+    /// <summary>
+    /// Represents a list of tuples with two elements.
+    /// </summary>
+    /// <typeparam name="T1">The type of the first element in the tuple.</typeparam>
+    /// <typeparam name="T2">The type of the second element in the tuple.</typeparam>
     public class TupleList<T1, T2> : List<Tuple<T1, T2>>
     {
-        public TupleList(TupleList<T1, T2> tuplelist)
+        /// <summary>
+        /// Represents a list of tuples with two elements.
+        /// </summary>
+        /// <typeparam name="T1">The type of the first element in the tuple.</typeparam>
+        /// <typeparam name="T2">The type of the second element in the tuple.</typeparam>
+        public TupleList(TupleList<T1, T2> tupleList)
         {
-            foreach (Tuple<T1, T2> tuple in tuplelist)
+            foreach (var tuple in tupleList)
             {
-                this.Add(tuple);
+                Add(tuple);
             }
         }
         public TupleList() { }
@@ -27,32 +37,69 @@ namespace Albo1125.Common.CommonLibrary
             Add(new Tuple<T1, T2>(item, item2));
         }
     }
+
+    /// <summary>
+    /// Represents a list of tuples.
+    /// </summary>
+    /// <typeparam name="T1">The type of the first element in the tuple.</typeparam>
+    /// <typeparam name="T2">The type of the second element in the tuple.</typeparam>
+    /// <typeparam name="T3">The type of the third element in the tuple.</typeparam>
     public class TupleList<T1, T2, T3> : List<Tuple<T1, T2, T3>>
     {
         public TupleList() { }
-        public TupleList(TupleList<T1, T2, T3> tuplelist)
+        public TupleList(TupleList<T1, T2, T3> tupleList)
         {
-            foreach (Tuple<T1, T2, T3> tuple in tuplelist)
+            foreach (var tuple in tupleList)
             {
-                this.Add(tuple);
+                Add(tuple);
             }
         }
+
+        /// <summary>
+        /// Adds an item to the TupleList.
+        /// </summary>
+        /// <typeparam name="T1">The type of the first item in the Tuple.</typeparam>
+        /// <typeparam name="T2">The type of the second item in the Tuple.</typeparam>
+        /// <typeparam name="T3">The type of the third item in the Tuple.</typeparam>
+        /// <param name="item">The first item to add to the TupleList.</param>
+        /// <param name="item2">The second item to add to the TupleList.</param>
+        /// <param name="item3">The third item to add to the TupleList.</param>
+        /// <remarks>
+        /// This method adds a new Tuple with the specified items to the TupleList.
+        /// </remarks>
         public void Add(T1 item, T2 item2, T3 item3)
         {
             Add(new Tuple<T1, T2, T3>(item, item2, item3));
         }
 
     }
+
+    /// <summary>
+    /// Represents a list of tuples with two elements.
+    /// </summary>
+    /// <typeparam name="T1">The type of the first element in each tuple.</typeparam>
+    /// <typeparam name="T2">The type of the second element in each tuple.</typeparam>
+    /// <typeparam name="T3">The type of the third element in each tuple.</typeparam>
+    /// <typeparam name="T4">The type of the fourth element in each tuple.</typeparam>
     public class TupleList<T1, T2, T3, T4> : List<Tuple<T1, T2, T3, T4>>
     {
         public TupleList() { }
-        public TupleList(TupleList<T1, T2, T3, T4> tuplelist)
+        
+        public TupleList(TupleList<T1, T2, T3, T4> tupleList)
         {
-            foreach (Tuple<T1, T2, T3, T4> tuple in tuplelist)
+            foreach (var tuple in tupleList)
             {
-                this.Add(tuple);
+                Add(tuple);
             }
         }
+
+        /// <summary>
+        /// Adds an item to the TupleList.
+        /// </summary>
+        /// <param name="item">The first item of the Tuple.</param>
+        /// <param name="item2">The second item of the Tuple.</param>
+        /// <param name="item3">The third item of the Tuple.</param>
+        /// <param name="item4">The fourth item of the Tuple.</param>
         public void Add(T1 item, T2 item2, T3 item3, T4 item4)
         {
             Add(new Tuple<T1, T2, T3, T4>(item, item2, item3, item4));
@@ -60,66 +107,87 @@ namespace Albo1125.Common.CommonLibrary
 
     }
 
+    /// <summary>
+    /// This class contains extension methods that can be used on various types.
+    /// </summary>
     public static class ExtensionMethods
     {
+        public static readonly int[] BlackListedNodeTypes = { 0, 8, 9, 10, 12, 40, 42, 136 };
 
-
-        //private static bool DisplayTime = false;
-
-        public static int[] BlackListedNodeTypes = new int[] { 0, 8, 9, 10, 12, 40, 42, 136 };
+        /// <summary>
+        /// Returns the nearest node type to the specified position.
+        /// </summary>
+        /// <param name="pos">The position to check for nearest node type.</param>
+        /// <returns>The nearest node type to the specified position. Returns -1 if no node type found.</returns>
         public static int GetNearestNodeType(this Vector3 pos)
         {
-            bool get_property_success = false;
-            uint node_prop_p1;
-            int found_node_type;
+            bool getPropertySuccess = NativeFunction.Natives.GET_VEHICLE_NODE_PROPERTIES<bool>(pos.X, pos.Y, pos.Z, out uint _, out int foundNodeType);
 
-            get_property_success = NativeFunction.Natives.GET_VEHICLE_NODE_PROPERTIES<bool>(pos.X, pos.Y, pos.Z, out node_prop_p1, out found_node_type);
+            if (getPropertySuccess)
+            {
+                return foundNodeType;
+            }
             
-
-            if (get_property_success)
-            {
-                return found_node_type;
-            }
-            else
-            {
-                return -1;
-            }
+            return -1;
         }
 
+        /// <summary>
+        /// Determines if a given node is safe.
+        /// </summary>
+        /// <param name="pos">The position of the node to check.</param>
+        /// <returns>True if the node is safe; otherwise, false.</returns>
         public static bool IsNodeSafe(this Vector3 pos)
         {
             return !BlackListedNodeTypes.Contains(GetNearestNodeType(pos));
         }
 
+        /// <summary>
+        /// Determines whether a given point is on water.
+        /// </summary>
+        /// <param name="position">The position to check.</param>
+        /// <returns>True if the point is on water, false otherwise.</returns>
         public static bool IsPointOnWater(this Vector3 position)
         {
-            float height;
-
-            return NativeFunction.Natives.GET_WATER_HEIGHT<bool>(position.X, position.Y, position.Z, out height);
-                      
+            return NativeFunction.Natives.GET_WATER_HEIGHT<bool>(position.X, position.Y, position.Z, out float _);
         }
 
-        public static void DisplayPopupTextBoxWithConfirmation(string Title, string Text, bool PauseGame)
+        /// <summary>
+        /// Displays a popup text box with confirmation in the game.
+        /// </summary>
+        /// <param name="title">The title of the popup.</param>
+        /// <param name="text">The text body of the popup.</param>
+        /// <param name="pauseGame">Specifies whether the game should be paused while the popup is displayed.</param>
+        public static void DisplayPopupTextBoxWithConfirmation(string title, string text, bool pauseGame)
         {
-            new Popup(Title, Text, PauseGame, true).Display();
-        }   
+            new Popup(title, text, pauseGame, true).Display();
+        }
 
+        /// <summary>
+        /// Wraps a text into multiple lines based on the specified width in pixels.
+        /// </summary>
+        /// <param name="text">The text to wrap.</param>
+        /// <param name="pixels">The width in pixels.</param>
+        /// <param name="fontFamily">The font family to use.</param>
+        /// <param name="emSize">The font size.</param>
+        /// <param name="actualHeight">Out parameter to store the actual height of the formatted text.</param>
+        /// <returns>A list of wrapped lines.</returns>
         public static List<string> WrapText(this string text, double pixels, string fontFamily, float emSize, out double actualHeight)
         {
-            string[] originalLines = text.Split(new string[] { " " },
+            var originalLines = text.Split(new[] { " " },
                 StringSplitOptions.None);
 
-            List<string> wrappedLines = new List<string>();
+            var wrappedLines = new List<string>();
 
-            StringBuilder actualLine = new StringBuilder();
+            var actualLine = new StringBuilder();
             double actualWidth = 0;
             actualHeight = 0;
             foreach (var item in originalLines)
             {
-                System.Windows.Media.FormattedText formatted = new System.Windows.Media.FormattedText(item,
+                var formatted = new System.Windows.Media.FormattedText(item,
                     CultureInfo.CurrentCulture,
                     System.Windows.FlowDirection.LeftToRight,
-                    new System.Windows.Media.Typeface(fontFamily), emSize, System.Windows.Media.Brushes.Black);
+                    new System.Windows.Media.Typeface(fontFamily), emSize, System.Windows.Media.Brushes.Black,2);
+                
 
 
                 actualWidth += formatted.Width;
@@ -150,170 +218,227 @@ namespace Albo1125.Common.CommonLibrary
             return wrappedLines;
         }
 
+        /// <summary>
+        /// Checks if the given Ped is a police Ped.
+        /// </summary>
+        /// <param name="ped">The Ped to check.</param>
+        /// <returns>Returns true if the Ped is a police Ped; otherwise, false.</returns>
         public static bool IsPolicePed(this Ped ped)
         {
             return ped.RelationshipGroup == "COP";
         }
 
-        public static string GetKeyString(Keys MainKey, Keys ModifierKey)
+        /// <summary>
+        /// Gets the string representation of a key combination.
+        /// </summary>
+        /// <param name="mainKey">The main key of the combination.</param>
+        /// <param name="modifierKey">The modifier key of the combination.</param>
+        /// <returns>
+        /// The string representation of the key combination.
+        /// </returns>
+        public static string GetKeyString(Keys mainKey, Keys modifierKey)
         {
-            if (ModifierKey == Keys.None)
+            if (modifierKey == Keys.None)
             {
-                return MainKey.ToString();
+                return mainKey.ToString();
             }
-            else
+
+            var strModKey = modifierKey.ToString();
+
+            if (strModKey.EndsWith("ControlKey") | strModKey.EndsWith("ShiftKey"))
             {
-                string strmodKey = ModifierKey.ToString();
-
-                if (strmodKey.EndsWith("ControlKey") | strmodKey.EndsWith("ShiftKey"))
-                {
-                    strmodKey.Replace("Key", "");
-                }
-
-                if (strmodKey.Contains("ControlKey"))
-                {
-                    strmodKey = "CTRL";
-                }
-                else if (strmodKey.Contains("ShiftKey"))
-                {
-                    strmodKey = "Shift";
-                }
-                else if (strmodKey.Contains("Menu"))
-                {
-                    strmodKey = "ALT";
-                }
-
-                return string.Format("{0} + {1}", strmodKey, MainKey.ToString());
+                strModKey = strModKey.Replace("Key", "");
             }
+
+            if (strModKey.Contains("ControlKey"))
+            {
+                strModKey = "CTRL";
+            }
+            else if (strModKey.Contains("ShiftKey"))
+            {
+                strModKey = "Shift";
+            }
+            else if (strModKey.Contains("Menu"))
+            {
+                strModKey = "ALT";
+            }
+
+            return $"{strModKey} + {mainKey.ToString()}";
         }
 
-        public static float CalculateHeadingTowardsEntity (this Entity ent, Entity TargetEntity)
+        /// <summary>
+        /// Calculates the heading (in degrees) towards the specified entity from the current entity.
+        /// </summary>
+        /// <param name="ent">The entity from which the heading needs to be calculated.</param>
+        /// <param name="targetEntity">The entity towards which the heading needs to be calculated.</param>
+        /// <returns>
+        /// The heading value in degrees towards the specified entity from the current entity.
+        /// </returns>
+        public static float CalculateHeadingTowardsEntity (this Entity ent, Entity targetEntity)
         {
-            Vector3 directionToTargetEnt = (TargetEntity.Position - ent.Position);
+            var directionToTargetEnt = (targetEntity.Position - ent.Position);
             directionToTargetEnt.Normalize();
             return MathHelper.ConvertDirectionToHeading(directionToTargetEnt);
             
         }
 
-        public static float CalculateHeadingTowardsPosition(this Vector3 start, Vector3 Target)
+        /// <summary>
+        /// Calculates the heading angle towards a target position from the start position.
+        /// </summary>
+        /// <param name="start">The start position.</param>
+        /// <param name="target">The target position.</param>
+        /// <returns>The heading angle towards the target position.</returns>
+        public static float CalculateHeadingTowardsPosition(this Vector3 start, Vector3 target)
         {
-            Vector3 directionToTargetEnt = (Target - start);
+            var directionToTargetEnt = (target - start);
             directionToTargetEnt.Normalize();
             return MathHelper.ConvertDirectionToHeading(directionToTargetEnt);
 
         }
-        public static bool IsKeyDownComputerCheck(Keys KeyPressed)
+
+        /// <summary>
+        /// Checks if a key on the computer is currently being held down.
+        /// </summary>
+        /// <param name="keyPressed">The key to check if it is being held down.</param>
+        /// <returns>True if the specified key is being held down, false otherwise.</returns>
+        public static bool IsKeyDownComputerCheck(Keys keyPressed)
         {
-
-
-            if (Rage.Native.NativeFunction.Natives.UPDATE_ONSCREEN_KEYBOARD<int>() != 0)
-            {
-                
-                return Game.IsKeyDown(KeyPressed);
-            }
-            else
-            {
-                return false;
-            }
-
-
-
-        }
-        public static bool IsKeyDownRightNowComputerCheck(Keys KeyPressed)
-        {
-
-
-            if (Rage.Native.NativeFunction.Natives.UPDATE_ONSCREEN_KEYBOARD<int>() != 0)
-            {
-                return Game.IsKeyDownRightNow(KeyPressed);
-            }
-            else
-            {
-                return false;
-            }
-
-
-
+            return NativeFunction.Natives.UPDATE_ONSCREEN_KEYBOARD<int>() != 0 && Game.IsKeyDown(keyPressed);
         }
 
-        public static bool IsKeyCombinationDownComputerCheck(Keys MainKey, Keys ModifierKey)
+        /// <summary>
+        /// Checks if a specific key is currently being pressed on the computer keyboard.
+        /// </summary>
+        /// <param name="keyPressed">The key to check.</param>
+        /// <returns>true if the specified key is currently being pressed on the computer keyboard; otherwise, false.</returns>
+        public static bool IsKeyDownRightNowComputerCheck(Keys keyPressed)
         {
-            if (MainKey != Keys.None)
-            {
-                return ExtensionMethods.IsKeyDownComputerCheck(MainKey) && (ExtensionMethods.IsKeyDownRightNowComputerCheck(ModifierKey)
-                || (ModifierKey == Keys.None && !ExtensionMethods.IsKeyDownRightNowComputerCheck(Keys.Shift) && !ExtensionMethods.IsKeyDownRightNowComputerCheck(Keys.Control)
-                && !ExtensionMethods.IsKeyDownRightNowComputerCheck(Keys.LControlKey) && !ExtensionMethods.IsKeyDownRightNowComputerCheck(Keys.LShiftKey)));
-            }
-            else
-            {
-                return false;
-            }
-        }
-        public static bool IsKeyCombinationDownRightNowComputerCheck(Keys MainKey, Keys ModifierKey)
-        {
-            if (MainKey != Keys.None)
-            {
-                return ExtensionMethods.IsKeyDownRightNowComputerCheck(MainKey) && ((ExtensionMethods.IsKeyDownRightNowComputerCheck(ModifierKey)
-                    || (ModifierKey == Keys.None && !ExtensionMethods.IsKeyDownRightNowComputerCheck(Keys.Shift) && !ExtensionMethods.IsKeyDownRightNowComputerCheck(Keys.Control)
-                    && !ExtensionMethods.IsKeyDownRightNowComputerCheck(Keys.LControlKey) && !ExtensionMethods.IsKeyDownRightNowComputerCheck(Keys.LShiftKey))));
-            }
-            else
-            {
-                return false;
-            }
-
+            return NativeFunction.Natives.UPDATE_ONSCREEN_KEYBOARD<int>() != 0 && Game.IsKeyDownRightNow(keyPressed);
         }
 
+        /// <summary>
+        /// Checks if the specified key combination is currently pressed down on the computer.
+        /// </summary>
+        /// <param name="mainKey">The main key of the combination.</param>
+        /// <param name="modifierKey">The modifier key of the combination.</param>
+        /// <returns>
+        /// <c>true</c> if both the main key and modifier key are currently pressed down on the computer;
+        /// otherwise, <c>false</c>.
+        /// </returns>
+        public static bool IsKeyCombinationDownComputerCheck(Keys mainKey, Keys modifierKey)
+        {
+            if (mainKey != Keys.None)
+            {
+                return IsKeyDownComputerCheck(mainKey) && (IsKeyDownRightNowComputerCheck(modifierKey)
+                || (modifierKey == Keys.None && !IsKeyDownRightNowComputerCheck(Keys.Shift) && !IsKeyDownRightNowComputerCheck(Keys.Control)
+                && !IsKeyDownRightNowComputerCheck(Keys.LControlKey) && !IsKeyDownRightNowComputerCheck(Keys.LShiftKey)));
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Checks if the specified key combination is currently being pressed on the computer.
+        /// </summary>
+        /// <param name="mainKey">The main key of the combination.</param>
+        /// <param name="modifierKey">The modifier key of the combination.</param>
+        /// <returns>True if the key combination is currently being pressed, otherwise false.</returns>
+        public static bool IsKeyCombinationDownRightNowComputerCheck(Keys mainKey, Keys modifierKey)
+        {
+            if (mainKey != Keys.None)
+            {
+                return IsKeyDownRightNowComputerCheck(mainKey) && ((IsKeyDownRightNowComputerCheck(modifierKey)
+                    || (modifierKey == Keys.None && !IsKeyDownRightNowComputerCheck(Keys.Shift) && !IsKeyDownRightNowComputerCheck(Keys.Control)
+                    && !IsKeyDownRightNowComputerCheck(Keys.LControlKey) && !IsKeyDownRightNowComputerCheck(Keys.LShiftKey))));
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Reverses the characters in a string.
+        /// </summary>
+        /// <param name="s">The string to be reversed.</param>
+        /// <returns>The reversed string.</returns>
         public static string Reverse(this string s)
         {
-            char[] charArray = s.ToCharArray();
+            var charArray = s.ToCharArray();
             Array.Reverse(charArray);
             return new string(charArray);
         }
 
+        /// <summary>
+        /// Randomly selects an element from the given source collection.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in the source collection.</typeparam>
+        /// <param name="source">The source collection to pick random elements from.</param>
+        /// <returns>The randomly selected element from the source collection.</returns>
         public static T PickRandom<T>(this IEnumerable<T> source)
         {
             return source.PickRandom(1).Single();
         }
+
+        /// <summary>
+        /// Randomly selects an element from the given source collection.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in the source collection.</typeparam>
+        /// <param name="source">The source collection to pick random elements from.</param>
+        /// <param name="count">Amount of elements</param>
+        /// <returns>The randomly selected element from the source collection.</returns>
         public static IEnumerable<T> PickRandom<T>(this IEnumerable<T> source, int count)
         {
             return new List<T>(source).Shuffle().Take(count);
         }
-        public static List<T> Shuffle<T>(this List<T> List)
+
+        /// <summary>
+        /// Shuffles the elements of the given source list.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the source list.</typeparam>
+        /// <param name="sourceList">The source list to shuffle.</param>
+        /// <returns>A new list with the elements of the source list in random order.</returns>
+        public static List<T> Shuffle<T>(this IEnumerable<T> sourceList)
         {
-            List<T> list = new List<T>(List);
-            int n = list.Count;
-            while (n > 1)
+            var shuffledList = new List<T>(sourceList);
+            var listCount = shuffledList.Count;
+            while (listCount > 1)
             {
-                n--;
-                int k = CommonVariables.rnd.Next(n + 1);
-                T value = list[k];
-                list[k] = list[n];
-                list[n] = value;
+                listCount--;
+                var k = CommonVariables.rnd.Next(listCount + 1);
+                (shuffledList[k], shuffledList[listCount]) = (shuffledList[listCount], shuffledList[k]);
             }
-            return list;
+            return shuffledList;
             
         }
 
+        /// <summary>
+        /// Makes the specified <see cref="Ped"/> a mission ped.
+        /// </summary>
+        /// <param name="ped">The <see cref="Ped"/> to make a mission ped.</param>
         public static void MakeMissionPed(this Ped ped)
         {
             ped.BlockPermanentEvents = true;
             ped.IsPersistent = true;
 
         }
+
+        /// <summary>
+        /// Clones a Ped object.
+        /// </summary>
+        /// <param name="oldPed">The original Ped object to clone.</param>
+        /// <returns>A new Ped object with the same properties as the original Ped.</returns>
         public static Ped ClonePed(this Ped oldPed)
         {
-            Vector3 oldPedPosition = oldPed.Position;
-            float oldPedHeading = oldPed.Heading;
-            bool spawnInVehicle = false;
-            Vehicle car = null;
-            int seatindex = 0;
-            int oldarmor = oldPed.Armor;
-            int oldhealth = oldPed.Health;
+            var oldPedPosition = oldPed.Position;
+            var oldPedHeading = oldPed.Heading;
+            var spawnInVehicle = false;
+            Vehicle vehicle = null;
+            var oldPedSeatIndex = 0;
+            var oldPedArmor = oldPed.Armor;
+            var oldPedHealth = oldPed.Health;
             if (oldPed.IsInAnyVehicle(false))
             {
-                car = oldPed.CurrentVehicle;
-                seatindex = oldPed.SeatIndex;
+                vehicle = oldPed.CurrentVehicle;
+                oldPedSeatIndex = oldPed.SeatIndex;
                 spawnInVehicle = true;
             }
             Ped newPed = NativeFunction.Natives.ClonePed<Ped>(oldPed, oldPed.Heading, false, true);
@@ -326,205 +451,213 @@ namespace Albo1125.Common.CommonLibrary
 
             if (spawnInVehicle)
             {
-                newPed.WarpIntoVehicle(car, seatindex);
+                newPed.WarpIntoVehicle(vehicle, oldPedSeatIndex);
             }
-            newPed.Health = oldhealth;
-            newPed.Armor = oldarmor;
+            newPed.Health = oldPedHealth;
+            newPed.Armor = oldPedArmor;
             newPed.BlockPermanentEvents = true;
             newPed.IsPersistent = true;
             return newPed;
         }
 
+
         /// <summary>
-        /// Toggles the neon light in a vehicle
+        /// Toggles the neon light of a vehicle.
         /// </summary>
-        /// <param name="vehicle"></param>
-        /// <param name="neonLight">Neon index</param>
-        /// <param name="toggle">Toggle the neon</param>
+        /// <param name="vehicle">The vehicle to toggle the neon light for.</param>
+        /// <param name="neonLight">The neon light to toggle.</param>
+        /// <param name="toggle">True to enable the neon light, false to disable it.</param>
         public static void ToggleNeonLight(this Vehicle vehicle, ENeonLights neonLight, bool toggle)
         {
-            ulong SetVehicleNeonLightEnabledHash = 0x2aa720e4287bf269;
+            const ulong setVehicleNeonLightEnabledHash = 0x2aa720e4287bf269;
 
-            NativeFunction.CallByHash<uint>(SetVehicleNeonLightEnabledHash, vehicle, (int)neonLight, toggle);
+            NativeFunction.CallByHash<uint>(setVehicleNeonLightEnabledHash, vehicle, (int)neonLight, toggle);
         }
 
 
         /// <summary>
-        /// Sets the neon light color
+        /// Sets the color of the neon lights on a vehicle.
         /// </summary>
-        /// <param name="vehicle"></param>
-        /// <param name="color">Color to set</param>
+        /// <param name="vehicle">The vehicle to set the neon lights color on.</param>
+        /// <param name="color">The color to set the neon lights to.</param>
         public static void SetNeonLightsColor(this Vehicle vehicle, Color color)
         {
-            ulong SetVehicleNeonLightsColoursHash = 0x8e0a582209a62695;
+            const ulong setVehicleNeonLightsColoursHash = 0x8e0a582209a62695;
 
-            NativeFunction.CallByHash<uint>(SetVehicleNeonLightsColoursHash, vehicle, (int)color.R, (int)color.G, (int)color.B);
+            NativeFunction.CallByHash<uint>(setVehicleNeonLightsColoursHash, vehicle, (int)color.R, (int)color.G, (int)color.B);
         }
 
 
         /// <summary>
-        /// Returns true if the neon light is enabled
+        /// Determines whether the specified neon light of the vehicle is enabled.
         /// </summary>
-        /// <param name="vehicle"></param>
-        /// <param name="neonLight">Neon index</param>
-        /// <returns>true if the neon light is enabled</returns>
+        /// <param name="vehicle">The vehicle.</param>
+        /// <param name="neonLight">The neon light to check.</param>
+        /// <returns>Returns <c>true</c> if the neon light is enabled, otherwise returns <c>false</c>.</returns>
         public static bool IsNeonLightEnable(this Vehicle vehicle, ENeonLights neonLight)
         {
-            ulong IsVehicleNeonLightEnabledHash = 0x8c4b92553e4766a5;
-            if (NativeFunction.CallByHash<bool>(IsVehicleNeonLightEnabledHash, vehicle, (int)neonLight)) return true;
-            else if (!NativeFunction.CallByHash<bool>(IsVehicleNeonLightEnabledHash, vehicle, (int)neonLight)) return false;
-            else return false;
+            const ulong isVehicleNeonLightEnabledHash = 0x8c4b92553e4766a5;
+            return NativeFunction.CallByHash<bool>(isVehicleNeonLightEnabledHash, vehicle, (int)neonLight);
         }
 
 
         /// <summary>
-        /// Returns the neon light color
+        /// Retrieves the current neon lights color of the specified vehicle.
         /// </summary>
-        /// <param name="vehicle"></param>
-        /// <returns>the neon light color</returns>
-        public static System.Drawing.Color GetNeonLightsColor(this Vehicle vehicle)
+        /// <param name="vehicle">The vehicle to get the neon lights color of.</param>
+        /// <returns>The neon lights color of the specified vehicle.</returns>
+        public static Color GetNeonLightsColor(this Vehicle vehicle)
         {
             return UnsafeGetNeonLightsColor(vehicle);
         }
-        private static unsafe System.Drawing.Color UnsafeGetNeonLightsColor(Vehicle vehicle)
+
+        /// <summary>
+        /// Retrieves the current neon lights color of the specified vehicle.
+        /// </summary>
+        /// <param name="vehicle">The vehicle to get the neon lights color of.</param>
+        /// <returns>The neon lights color of the specified vehicle.</returns>
+        private static unsafe Color UnsafeGetNeonLightsColor(Vehicle vehicle)
         {
-            Color color;
             int red;
             int green;
             int blue;
-            ulong GetVehicleNeonLightsColourHash = 0x7619eee8c886757f;
-            NativeFunction.CallByHash<uint>(GetVehicleNeonLightsColourHash, vehicle, &red, &green, &blue);
+            const ulong getVehicleNeonLightsColourHash = 0x7619eee8c886757f;
+            NativeFunction.CallByHash<uint>(getVehicleNeonLightsColourHash, vehicle, &red, &green, &blue);
 
-            return color = Color.FromArgb(red, green, blue);
+            return Color.FromArgb(red, green, blue);
         }
-
 
 
         /// <summary>
-        /// Gets the primary and secondary colors of this instance of Rage.Vehicle
+        /// Retrieves the primary and secondary colors of a given vehicle.
         /// </summary>
-        /// <param name="v"></param>
-        /// <returns></returns>
-        public static VehicleColor GetColors(this Vehicle v)
+        /// <param name="vehicle">The vehicle to get the colors from.</param>
+        /// <returns>The VehicleColor object representing the primary and secondary colors of the vehicle.</returns>
+        public static VehicleColor GetColors(this Vehicle vehicle)
         {
-            return UnsafeGetVehicleColors(v);
+            return UnsafeGetVehicleColors(vehicle);
         }
 
+        /// <summary>
+        /// Get the colors of a vehicle.
+        /// </summary>
+        /// <param name="vehicle">The vehicle to get the colors from.</param>
+        /// <returns>The colors of the vehicle.</returns>
         private static unsafe VehicleColor UnsafeGetVehicleColors(Vehicle vehicle)
         {
             int colorPrimaryInt;
             int colorSecondaryInt;
 
-            ulong GetVehicleColorsHash = 0xa19435f193e081ac;
-            NativeFunction.CallByHash<uint>(GetVehicleColorsHash, vehicle, &colorPrimaryInt, &colorSecondaryInt);
+            const ulong getVehicleColorsHash = 0xa19435f193e081ac;
+            NativeFunction.CallByHash<uint>(getVehicleColorsHash, vehicle, &colorPrimaryInt, &colorSecondaryInt);
 
-            VehicleColor colors = new VehicleColor();
+            var vehicleColors = new VehicleColor
+            {
+                PrimaryColor = (EPaint)colorPrimaryInt,
+                SecondaryColor = (EPaint)colorSecondaryInt
+            };
 
-            colors.PrimaryColor = (EPaint)colorPrimaryInt;
-            colors.SecondaryColor = (EPaint)colorSecondaryInt;
-
-            return colors;
+            return vehicleColors;
         }
 
-
-
         /// <summary>
-        /// Sets the color to this Rage.Vehicle instance
+        /// Set the primary and secondary colors of a vehicle.
         /// </summary>
-        /// <param name="v"></param>
-        /// <param name="primaryColor">The primary color</param>
-        /// <param name="secondaryColor">The secondary color</param>
-        public static void SetColors(this Vehicle v, EPaint primaryColor, EPaint secondaryColor)
+        /// <param name="vehicle">The vehicle to set the colors for.</param>
+        /// <param name="primaryColor">The primary color to set for the vehicle. It should be of type <see cref="EPaint"/>.</param>
+        /// <param name="secondaryColor">The secondary color to set for the vehicle. It should be of type <see cref="EPaint"/>.</param>
+        public static void SetColors(this Vehicle vehicle, EPaint primaryColor, EPaint secondaryColor)
         {
-            NativeFunction.Natives.SET_VEHICLE_COLOURS(v, (int)primaryColor, (int)secondaryColor);
-        }
-        /// <summary>
-        /// Sets the color to this Rage.Vehicle instance
-        /// </summary>
-        /// <param name="v"></param>
-        /// <param name="color">The color</param>
-        public static void SetColors(this Vehicle v, VehicleColor color)
-        {
-            NativeFunction.Natives.SET_VEHICLE_COLOURS(v, (int)color.PrimaryColor, (int)color.SecondaryColor);
+            NativeFunction.Natives.SET_VEHICLE_COLOURS(vehicle, (int)primaryColor, (int)secondaryColor);
         }
 
         /// <summary>
-        /// Randomise the license plate to avoid excessively frequent debug plates from showing.
+        /// Sets the primary and secondary colors of a vehicle.
         /// </summary>
+        /// <param name="vehicle">The vehicle to set the colors for.</param>
+        /// <param name="color">The primary color to set.</param>
+        public static void SetColors(this Vehicle vehicle, VehicleColor color)
+        {
+            NativeFunction.Natives.SET_VEHICLE_COLOURS(vehicle, (int)color.PrimaryColor, (int)color.SecondaryColor);
+        }
+
+
+        /// <summary>
+        /// Randomizes the license plate of a vehicle.
+        /// The license plate is generated by combining random numbers and characters.
+        /// </summary>
+        /// <param name="vehicle">The vehicle whose license plate should be randomized.</param>
         public static void RandomiseLicencePlate(this Vehicle vehicle)
         {
-            if (vehicle)
-            {
-                vehicle.LicensePlate = MathHelper.GetRandomInteger(9).ToString() +
-                                       MathHelper.GetRandomInteger(9).ToString() +
-                                       Convert.ToChar(MathHelper.GetRandomInteger(0, 25) + 65) +
-                                       Convert.ToChar(MathHelper.GetRandomInteger(0, 25) + 65) +
-                                       Convert.ToChar(MathHelper.GetRandomInteger(0, 25) + 65) +
-                                       MathHelper.GetRandomInteger(9).ToString() +
-                                       MathHelper.GetRandomInteger(9).ToString() +
-                                       MathHelper.GetRandomInteger(9).ToString();
-#if DEBUG
-                Game.LogTrivial($"Set {vehicle.Model.Name} license plate to {vehicle.LicensePlate}");
-#endif
-            }
+            if (!vehicle) return;
+            
+            vehicle.LicensePlate = MathHelper.GetRandomInteger(9) +
+                                   MathHelper.GetRandomInteger(9) +
+                                   Convert.ToChar(MathHelper.GetRandomInteger(0, 25) + 65) +
+                                   Convert.ToChar(MathHelper.GetRandomInteger(0, 25) + 65) +
+                                   Convert.ToChar(MathHelper.GetRandomInteger(0, 25) + 65) +
+                                   MathHelper.GetRandomInteger(9) +
+                                   MathHelper.GetRandomInteger(9) +
+                                   MathHelper.GetRandomInteger(9).ToString();
         }
 
-        /// Cache the result of whether a vehicle is an ELS vehicle.
-        /// </summary>
-        private static Dictionary<Model, bool> vehicleModelELSCache = new Dictionary<Model, bool>();
+
+        private static readonly Dictionary<Model, bool> VehicleModelElsCache = new Dictionary<Model, bool>();
+
 
         /// <summary>
-        /// Determine whether the passed vehicle model is an ELS vehicle.
+        /// Determines if a given vehicle model is ELS-enabled.
         /// </summary>
-        /// <param name="model"></param>
-        /// <returns></returns>
-        public static bool VehicleModelIsELS(Model model)
+        /// <param name="vehicleModel">The vehicle model to check.</param>
+        /// <returns>True if the vehicle model is ELS-enabled, false otherwise.</returns>
+        public static bool VehicleModelIsEls(Model vehicleModel)
         {
             try
             {
-                if (vehicleModelELSCache.ContainsKey(model))
+                if (VehicleModelElsCache.TryGetValue(vehicleModel, out var vehicleModelIsEls))
                 {
-                    return vehicleModelELSCache[model];
+                    return vehicleModelIsEls;
                 }
 
                 if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "ELS")))
                 {
                     // no ELS installation at all
-                    vehicleModelELSCache.Add(model, false);
+                    VehicleModelElsCache.Add(vehicleModel, false);
                     return false;
                 }
 
-                IEnumerable<string> elsFiles = Directory.EnumerateFiles(
+                var elsFiles = Directory.EnumerateFiles(
                     Path.Combine(Directory.GetCurrentDirectory(), "ELS"),
-                    $"{model.Name}.xml", SearchOption.AllDirectories);
+                    $"{vehicleModel.Name}.xml", SearchOption.AllDirectories);
 
-                vehicleModelELSCache.Add(model, elsFiles.Any());
-                return vehicleModelELSCache[model];
+                VehicleModelElsCache.Add(vehicleModel, elsFiles.Any());
+                return VehicleModelElsCache[vehicleModel];
             }
             catch (Exception e)
             {
-                Game.LogTrivial($"Failed to determine if a vehicle model '{model}' was ELS-enabled: {e}");
+                Game.LogTrivial($"Failed to determine if a vehicle model '{vehicleModel}' was ELS-enabled: {e}");
                 return false;
             }
         }
 
         /// <summary>
-        /// Determine whether the passed vehicle is an ELS vehicle.
+        /// Determines whether the given vehicle model is an ELS (Emergency Lighting System) model.
         /// </summary>
-        /// <param name="vehicle"></param>
-        /// <returns></returns>
-        public static bool VehicleModelIsELS(this Vehicle vehicle)
+        /// <param name="vehicleModel">The model of the vehicle.</param>
+        /// <returns>
+        /// <c>true</c> if the vehicle model is an ELS model; otherwise, <c>false</c>.
+        /// </returns>
+        public static bool VehicleModelIsEls(this Vehicle vehicleModel)
         {
-            if (vehicle)
-            {
-                return VehicleModelIsELS(vehicle.Model);
-            }
-            return false;
+            return vehicleModel && VehicleModelIsEls(vehicleModel.Model);
         }
 
     }
 
 
+    /// <summary>
+    /// Represents the different neon lights of a vehicle.
+    /// </summary>
     public enum ENeonLights
     {
         Front = 2,
@@ -533,13 +666,16 @@ namespace Albo1125.Common.CommonLibrary
         Right = 1,
     }
 
+    /// <summary>
+    /// The EPaint enum represents the different paint colors available for vehicles.
+    /// </summary>
     public enum EPaint
     {
         /* CLASSIC|METALLIC */
         Black = 0,
         Carbon_Black = 147,
         Graphite = 1,
-        Anhracite_Black = 11,
+        Anthracite_Black = 11,
         Black_Steel = 2,
         Dark_Steel = 3,
         Silver = 4,
@@ -710,46 +846,40 @@ namespace Albo1125.Common.CommonLibrary
     }
 
 }
+
+/// <summary>
+/// Representation of a vehicle color.
+/// </summary>
 public struct VehicleColor
 {
-    /// <summary>
-    /// The primary color paint index 
-    /// </summary>
     public EPaint PrimaryColor { get; set; }
 
-    /// <summary>
-    /// The secondary color paint index 
-    /// </summary>
+
     public EPaint SecondaryColor { get; set; }
 
 
-
     /// <summary>
-    /// Gets the primary color name
+    /// Represents the name of the primary color of a vehicle.
     /// </summary>
-    public string PrimaryColorName
-    {
-        get { return GetColorName(PrimaryColor); }
-    }
-    /// <summary>
-    /// Gets the secondary color name
-    /// </summary>
-    public string SecondaryColorName
-    {
-        get { return GetColorName(SecondaryColor); }
-    }
-
+    public string PrimaryColorName => GetColorName(PrimaryColor);
 
 
     /// <summary>
-    /// Gets the color name
+    /// The name of the secondary color of a vehicle.
     /// </summary>
-    /// <param name="paint">Color to get the name from</param>
-    /// <returns></returns>
-    public string GetColorName(EPaint paint)
+    /// <value>The name of the secondary color.</value>
+    public string SecondaryColorName => GetColorName(SecondaryColor);
+
+
+    /// <summary>
+    /// Gets the name of a color based on the given paint value.
+    /// </summary>
+    /// <param name="paint">The paint value representing a color.</param>
+    /// <returns>The name of the color.</returns>
+    public static string GetColorName(EPaint paint)
     {
-        String name = Enum.GetName(typeof(EPaint), paint);
-        return name.Replace("_", " ");
+        var name = Enum.GetName(typeof(EPaint), paint);
+        return name?.Replace("_", " ");
     }
 }
 
