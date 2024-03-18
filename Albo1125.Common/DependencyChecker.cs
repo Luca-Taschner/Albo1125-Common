@@ -11,273 +11,317 @@ using Rage.Native;
 
 namespace Albo1125.Common
 {
-
+    /// <summary>
+    /// The DependencyChecker class provides functionality for registering plugins for dependency checks and checking dependencies for a plugin.
+    /// </summary>
     public static class DependencyChecker
     {
-        private static List<string> RegisteredPluginsForDependencyChecks = new List<string>();
-        public static void RegisterPluginForDependencyChecks(string CallingPlugin)
+        private static readonly List<string> RegisteredPluginsForDependencyChecks = new List<string>();
+
+        /// <summary>
+        /// Registers a plugin for dependency checks.
+        /// </summary>
+        /// <param name="callingPlugin">The name of the plugin that is calling this method.</param>
+        public static void RegisterPluginForDependencyChecks(string callingPlugin)
         {
-            if (!RegisteredPluginsForDependencyChecks.Contains(CallingPlugin))
+            if (!RegisteredPluginsForDependencyChecks.Contains(callingPlugin))
             {
-                RegisteredPluginsForDependencyChecks.Add(CallingPlugin);
+                RegisteredPluginsForDependencyChecks.Add(callingPlugin);
             }
         }
 
-        private static TupleList<string, string, string> Plugins_URL_Errors = new TupleList<string, string, string>();
-        private static string scid;
+        private static readonly TupleList<string, string, string> PluginsUrlErrors = new TupleList<string, string, string>();
+        private static string _scid;
 
-        public static bool DependencyCheckMain(string CallingPlugin, Version Albo1125CommonVer, float MinimumRPHVersion, Version MadeForGTAVersion = null, Version MadeForLSPDFRVersion = null, Version RAGENativeUIVersion = null, string[] AudioFilesToCheckFor = null, string[] OtherRequiredFilesToCheckFor = null)
+        /// <summary>
+        /// Checks the dependencies for a plugin and returns whether the check is successful or not.
+        /// </summary>
+        /// <param name="callingPlugin">The name of the plugin that is calling this method.</param>
+        /// <param name="albo1125CommonVer">The version of Albo1125.Common.dll.</param>
+        /// <param name="minimumRphVersion">The minimum required version of RPH (RagePluginHook).</param>
+        /// <param name="madeForGtaVersion">The version of GTA the plugin is made for (optional).</param>
+        /// <param name="madeForLspdfrVersion">The version of LSPDFR the plugin is made for (optional).</param>
+        /// <param name="rageNativeUiVersion">The version of RageNativeUI the plugin is made for (optional).</param>
+        /// <param name="audioFilesToCheckFor">An array of audio files required by the plugin (optional).</param>
+        /// <param name="otherRequiredFilesToCheckFor">An array of other required files by the plugin (optional).</param>
+        /// <returns>True if all dependencies are met, otherwise False.</returns>
+        public static bool DependencyCheckMain(string callingPlugin, Version albo1125CommonVer, float minimumRphVersion, Version madeForGtaVersion = null, Version madeForLspdfrVersion = null, Version rageNativeUiVersion = null, string[] audioFilesToCheckFor = null, string[] otherRequiredFilesToCheckFor = null)
         {
-            return DependencyCheckMain(CallingPlugin, Albo1125CommonVer, MinimumRPHVersion, "https://youtu.be/af434m72rIo?list=PLEKypmos74W8PMP4k6xmVxpTKdebvJpFb", MadeForGTAVersion, MadeForLSPDFRVersion, RAGENativeUIVersion, AudioFilesToCheckFor, OtherRequiredFilesToCheckFor);
+            return DependencyCheckMain(callingPlugin, albo1125CommonVer, minimumRphVersion, "https://youtu.be/af434m72rIo?list=PLEKypmos74W8PMP4k6xmVxpTKdebvJpFb", madeForGtaVersion, madeForLspdfrVersion, rageNativeUiVersion, audioFilesToCheckFor, otherRequiredFilesToCheckFor);
         }
 
-        public static bool DependencyCheckMain(string CallingPlugin, Version Albo1125CommonVer, float MinimumRPHVersion, string installationVideoURL, Version MadeForGTAVersion = null, Version MadeForLSPDFRVersion = null, Version RAGENativeUIVersion = null, string[] AudioFilesToCheckFor = null, string[] OtherRequiredFilesToCheckFor = null)
+        /// <summary>
+        /// Performs a dependency check for a given plugin.
+        /// </summary>
+        /// <param name="callingPlugin">The name of the calling plugin.</param>
+        /// <param name="albo1125CommonVer">The required version of Albo1125.Common.</param>
+        /// <param name="minimumRphVersion">The minimum required version of RAGE Plugin Hook.</param>
+        /// <param name="installationVideoUrl">The URL of the installation video for the plugin.</param>
+        /// <param name="madeForGtaVersion">The specific version of GTA the plugin is made for (optional).</param>
+        /// <param name="madeForLspdfrVersion">The specific version of LSPDFR the plugin is made for (optional).</param>
+        /// <param name="rageNativeUiVersion">The specific version of RAGENativeUI the plugin is made for (optional).</param>
+        /// <param name="audioFilesToCheckFor">An array of audio files to check if they exist (optional).</param>
+        /// <param name="otherRequiredFilesToCheckFor">An array of other required files to check if they exist (optional).</param>
+        /// <returns>
+        /// True if all dependency checks pass, false otherwise.
+        /// </returns>
+        public static bool DependencyCheckMain(string callingPlugin, Version albo1125CommonVer, float minimumRphVersion,
+            string installationVideoUrl, Version madeForGtaVersion = null, Version madeForLspdfrVersion = null,
+            Version rageNativeUiVersion = null, string[] audioFilesToCheckFor = null,
+            string[] otherRequiredFilesToCheckFor = null)
         {
-            bool CheckPassedSuccessfully = true;
-            Game.LogTrivial("Albo1125.Common.dll " + Assembly.GetExecutingAssembly().GetName().Version.ToString() + " starting standard dependency check for " + CallingPlugin);
-            if (scid == null)
+            var checkPassedSuccessfully = true;
+            Game.LogTrivial("Albo1125.Common.dll " + Assembly.GetExecutingAssembly().GetName().Version +
+                            " starting standard dependency check for " + callingPlugin);
+            if (_scid == null)
             {
-                scid = NativeFunction.Natives.GET_PLAYER_NAME<string>(Game.LocalPlayer);
-                Game.LogTrivial("SCID:/" + scid + "/");
+                _scid = NativeFunction.Natives.GET_PLAYER_NAME<string>(Game.LocalPlayer);
+                Game.LogTrivial("SCID:/" + _scid + "/");
             }
+
             if (File.Exists("Albo1125.Common.dll"))
             {
-                Version InstalledCommonVer = new Version(FileVersionInfo.GetVersionInfo("Albo1125.Common.dll").ProductVersion);
-                if (InstalledCommonVer.CompareTo(Albo1125CommonVer) >= 0)
+                var installedCommonVer =
+                    new Version(FileVersionInfo.GetVersionInfo("Albo1125.Common.dll").ProductVersion);
+                if (installedCommonVer.CompareTo(albo1125CommonVer) >= 0)
                 {
-                    if (MadeForGTAVersion != null)
+                    if (madeForGtaVersion != null)
                     {
-                        Game.LogTrivial("GAME VERSION: " + Game.ProductVersion.ToString());
-                        int compare = Game.ProductVersion.CompareTo(MadeForGTAVersion);
+                        Game.LogTrivial("GAME VERSION: " + Game.ProductVersion);
+                        var compare = Game.ProductVersion.CompareTo(madeForGtaVersion);
                         if (compare > 0)
                         {
-                            Game.LogTrivial(CallingPlugin + " compatibility warning: The current game version is newer than " + MadeForGTAVersion.ToString() + " and may or may not be incompatible due to RPH changes. Use at own risk.");
+                            Game.LogTrivial(callingPlugin + " compatibility warning: The current game version is newer than " + madeForGtaVersion + " and may or may not be incompatible due to RPH changes. Use at own risk.");
                         }
                     }
 
-                    if (MadeForLSPDFRVersion != null)
+                    if (madeForLspdfrVersion != null)
                     {
                         if (File.Exists("Plugins/LSPD First Response.dll"))
                         {
-                            Version InstalledLSPDFRVer = new Version(FileVersionInfo.GetVersionInfo("Plugins/LSPD First Response.dll").ProductVersion);
-                            if (InstalledLSPDFRVer.CompareTo(MadeForLSPDFRVersion) != 0)
+                            var installedLspdfrVer = new Version(FileVersionInfo.GetVersionInfo("Plugins/LSPD First Response.dll").ProductVersion);
+                            if (installedLspdfrVer.CompareTo(madeForLspdfrVersion) != 0)
                             {
-                                Game.LogTrivial(CallingPlugin + " compatibility warning: Different LSPD First Response.dll version detected, use at your own risk! This mod was made for LSPDFR " + MadeForLSPDFRVersion.ToString());
-                                Game.DisplayNotification(CallingPlugin + " compatibility warning: Different LSPD First Response.dll version detected, use at your own risk! This mod was made for LSPDFR " + MadeForLSPDFRVersion.ToString());
-                                //Plugins_URL_Errors.Add(CallingPlugin, installationVideoURL, "Detected invalid LSPD First Response.dll version. To run this mod, you need LSPDFR " + MadeForLSPDFRVersion.ToString());
-                                //CheckPassedSuccessfully = false;
+                                Game.LogTrivial(callingPlugin + " compatibility warning: Different LSPD First Response.dll version detected, use at your own risk! This mod was made for LSPDFR " + madeForLspdfrVersion);
+                                Game.DisplayNotification(callingPlugin + " compatibility warning: Different LSPD First Response.dll version detected, use at your own risk! This mod was made for LSPDFR " + madeForLspdfrVersion);
                             }
                         }
                         else
                         {
                             Game.LogTrivial("LSPD First Response.dll not installed.");
-                            Plugins_URL_Errors.Add(CallingPlugin, installationVideoURL, "Couldn't detect required LSPD First Response.dll. You must install it.");
-                            CheckPassedSuccessfully = false;
+                            PluginsUrlErrors.Add(callingPlugin, installationVideoUrl, "Couldn't detect required LSPD First Response.dll. You must install it.");
+                            checkPassedSuccessfully = false;
                         }
 
                     }
-                    if (RAGENativeUIVersion != null)
+                    if (rageNativeUiVersion != null)
                     {
                         if (File.Exists("RAGENativeUI.dll"))
                         {
-                            Version InstalledNativeUIVer = new Version(FileVersionInfo.GetVersionInfo("RAGENativeUI.dll").ProductVersion);
-                            if (InstalledNativeUIVer.CompareTo(RAGENativeUIVersion) < 0)
+                            var installedNativeUiVer = new Version(FileVersionInfo.GetVersionInfo("RAGENativeUI.dll").ProductVersion);
+                            if (installedNativeUiVer.CompareTo(rageNativeUiVersion) < 0)
                             {
-                                Game.LogTrivial("RAGENativeUI.dll out of date. Required version of RAGENativeUI to run this mod: " + RAGENativeUIVersion);
-                                Plugins_URL_Errors.Add(CallingPlugin, installationVideoURL, "RAGENativeUI.dll out of date. Required version of RAGENativeUI to run this mod: " + RAGENativeUIVersion);
-                                CheckPassedSuccessfully = false;
+                                Game.LogTrivial("RAGENativeUI.dll out of date. Required version of RAGENativeUI to run this mod: " + rageNativeUiVersion);
+                                PluginsUrlErrors.Add(callingPlugin, installationVideoUrl, "RAGENativeUI.dll out of date. Required version of RAGENativeUI to run this mod: " + rageNativeUiVersion);
+                                checkPassedSuccessfully = false;
                             }
                         }
                         else
                         {
                             Game.LogTrivial("RAGENativeUI.dll is not installed. You must install it to run this mod.");
-                            Plugins_URL_Errors.Add(CallingPlugin, installationVideoURL, "RAGENativeUI.dll is not installed. You must install it to run this mod.");
-                            CheckPassedSuccessfully = false;
+                            PluginsUrlErrors.Add(callingPlugin, installationVideoUrl, "RAGENativeUI.dll is not installed. You must install it to run this mod.");
+                            checkPassedSuccessfully = false;
                         }
                     }
-                    if (AudioFilesToCheckFor != null)
+                    if (audioFilesToCheckFor != null)
                     {
-                        foreach (string s in AudioFilesToCheckFor)
+                        foreach (var fileString in audioFilesToCheckFor)
                         {
-                            if (!File.Exists(s))
-                            {
-                                Game.LogTrivial("Couldn't find the required audio file at " + s);
-                                Plugins_URL_Errors.Add(CallingPlugin, installationVideoURL, "You are missing required (new) audio files. Path is: " + s);
+                            if (File.Exists(fileString)) continue;
+                            
+                            Game.LogTrivial("Couldn't find the required audio file at " + fileString);
+                            PluginsUrlErrors.Add(callingPlugin, installationVideoUrl, "You are missing required (new) audio files. Path is: " + fileString);
 
-                                CheckPassedSuccessfully = false;
-                            }
+                            checkPassedSuccessfully = false;
                         }
                     }
-                    if (OtherRequiredFilesToCheckFor != null)
+                    if (otherRequiredFilesToCheckFor != null)
                     {
-                        foreach (string s in OtherRequiredFilesToCheckFor)
+                        foreach (var fileString in otherRequiredFilesToCheckFor)
                         {
-                            if (!File.Exists(s))
-                            {
-                                Game.LogTrivial("Couldn't find the required file at " + s);
-                                Plugins_URL_Errors.Add(CallingPlugin, installationVideoURL, "You are missing required (new) files. Path is: " + s);
-                                CheckPassedSuccessfully = false;
-                            }
+                            if (File.Exists(fileString)) continue;
+                            
+                            Game.LogTrivial("Couldn't find the required file at " + fileString);
+                            PluginsUrlErrors.Add(callingPlugin, installationVideoUrl, "You are missing required (new) files. Path is: " + fileString);
+                            checkPassedSuccessfully = false;
                         }
 
                     }
-                    if (!CheckForRageVersion(MinimumRPHVersion))
+                    if (!CheckForRageVersion(minimumRphVersion))
                     {
-                        CheckPassedSuccessfully = false;
-                        Plugins_URL_Errors.Add(CallingPlugin, installationVideoURL, "RAGEPluginHook is out of date. This mod requires RPH " + MinimumRPHVersion);
+                        checkPassedSuccessfully = false;
+                        PluginsUrlErrors.Add(callingPlugin, installationVideoUrl, "RAGEPluginHook is out of date. This mod requires RPH " + minimumRphVersion);
                     }
 
                 }
                 else
                 {
-                    Game.LogTrivial("Albo1125.Common.dll is out of date. This mod requires Albo1125.Common " + Albo1125CommonVer);
-                    Plugins_URL_Errors.Add(CallingPlugin, installationVideoURL, "Albo1125.Common.dll is out of date. This mod requires Albo1125.Common " + Albo1125CommonVer);
-                    CheckPassedSuccessfully = false;
+                    Game.LogTrivial("Albo1125.Common.dll is out of date. This mod requires Albo1125.Common " + albo1125CommonVer);
+                    PluginsUrlErrors.Add(callingPlugin, installationVideoUrl, "Albo1125.Common.dll is out of date. This mod requires Albo1125.Common " + albo1125CommonVer);
+                    checkPassedSuccessfully = false;
                 }
             }
             else
             {
-                CheckPassedSuccessfully = false;
+                checkPassedSuccessfully = false;
                 Game.LogTrivial("Albo1125.Common.dll is not installed. This mod requires Albo1125.Common to be installed. You've successfully run this without actually having it on your PC...spooky.");
-                Plugins_URL_Errors.Add(CallingPlugin, installationVideoURL, "Albo1125.Common.dll is not installed. This mod requires Albo1125.Common to be installed. You've successfully run this without actually having it on your PC...spooky.");
+                PluginsUrlErrors.Add(callingPlugin, installationVideoUrl, "Albo1125.Common.dll is not installed. This mod requires Albo1125.Common to be installed. You've successfully run this without actually having it on your PC...spooky.");
             }
-            if (RegisteredPluginsForDependencyChecks.Contains(CallingPlugin)) { RegisteredPluginsForDependencyChecks.Remove(CallingPlugin); }
-            if (RegisteredPluginsForDependencyChecks.Count == 0 && Plugins_URL_Errors.Count > 0) { DisplayDependencyErrors(); }
+            if (RegisteredPluginsForDependencyChecks.Contains(callingPlugin)) { RegisteredPluginsForDependencyChecks.Remove(callingPlugin); }
+            if (RegisteredPluginsForDependencyChecks.Count == 0 && PluginsUrlErrors.Count > 0) { DisplayDependencyErrors(); }
 
-            Game.LogTrivial("Dependency check for " + CallingPlugin + " successful: " + CheckPassedSuccessfully);
-            return CheckPassedSuccessfully;
+            Game.LogTrivial("Dependency check for " + callingPlugin + " successful: " + checkPassedSuccessfully);
+            return checkPassedSuccessfully;
 
         }
 
-        public static bool CheckIfThereAreNoConflictingFiles(string CallingMod, string[] FilesToCheckFor)
+        /// <summary>
+        /// Checks if there are no conflicting files for a given calling module.
+        /// </summary>
+        /// <param name="callingMod">The name of the calling module.</param>
+        /// <param name="filesToCheckFor">The collection of files to check for conflicts.</param>
+        /// <returns>True if there are no conflicting files, otherwise false.</returns>
+        public static bool CheckIfThereAreNoConflictingFiles(string callingMod, IEnumerable<string> filesToCheckFor)
         {
-            bool noconflicts = true;
-            foreach (string file in FilesToCheckFor)
+            var noConflicts = true;
+            foreach (var file in filesToCheckFor)
             {
-                if (File.Exists(file))
-                {
-                    ExtensionMethods.DisplayPopupTextBoxWithConfirmation(CallingMod + " detected a conflicting file",
-                        "The following file can cause conflicts with " + CallingMod + ": " + file + ". You are advised to remove it when running " + CallingMod + ".", true);
-                    noconflicts = false;
-                }
+                if (!File.Exists(file)) continue;
+                
+                ExtensionMethods.DisplayPopupTextBoxWithConfirmation(callingMod + " detected a conflicting file",
+                    "The following file can cause conflicts with " + callingMod + ": " + file + ". You are advised to remove it when running " + callingMod + ".", true);
+                noConflicts = false;
             }
-            return noconflicts;
-        }
-        public static bool CheckIfFileExists(string file, Version MinVer = null)
-        {
-            if (File.Exists(file))
-            {
-                Version InstalledVer = new Version(FileVersionInfo.GetVersionInfo(file).ProductVersion);
-                if (MinVer == null || InstalledVer.CompareTo(MinVer) >= 0)
-                {
-                    return true;
-                }
-            }
-            return false;
+            return noConflicts;
         }
 
-        private static int Index = -1;
+        /// <summary>
+        /// Checks if a file exists.
+        /// </summary>
+        /// <param name="file">The path of the file to check.</param>
+        /// <param name="minVer">Optional. The minimum required version of the file.</param>
+        /// <returns>True if the file exists and its version is greater than or equal to <paramref name="minVer"/>, otherwise false.</returns>
+        public static bool CheckIfFileExists(string file, Version minVer = null)
+        {
+            if (!File.Exists(file)) return false;
+            
+            
+            var installedVer = new Version(FileVersionInfo.GetVersionInfo(file).ProductVersion);
+            
+            return minVer == null || installedVer.CompareTo(minVer) >= 0;
+        }
+
+        private static int _index = -1;
+
+        /// <summary>
+        /// Displays the dependency errors for registered plugins.
+        /// </summary>
         public static void DisplayDependencyErrors()
         {
-            string ModsWithErrors = "";
+            var modsWithErrors = PluginsUrlErrors.Select(x => x.Item1).Distinct().ToList().Aggregate("", (current, errorString) => current + (errorString + ","));
 
-            foreach (string s in Plugins_URL_Errors.Select(x => x.Item1).Distinct().ToList())
-            {
-                ModsWithErrors += s + ",";
-            }
-            Popup pop = new Popup("Albo1125.Common detected errors", "Errors were detected in your installation of the following of my modifications, so they will not load: " + ModsWithErrors, new List<string>() { "Continue" }, false, false, NextDependencyErrorCallback);
-            pop.Display();
+            var popup = new Popup("Albo1125.Common detected errors", "Errors were detected in your installation of the following of my modifications, so they will not load: " + modsWithErrors, new List<string> { "Continue" }, false, false, NextDependencyErrorCallback);
+            popup.Display();
         }
 
-        private static void NextDependencyErrorCallback(Popup p)
+        /// <summary>
+        /// Callback method for handling dependency error popups.
+        /// </summary>
+        /// <param name="errorPopup">The Popup object representing the error message popup.</param>
+        private static void NextDependencyErrorCallback(Popup errorPopup)
         {
-            if (p.IndexOfGivenAnswer == 0)
+            switch (errorPopup.IndexOfGivenAnswer)
             {
-                Game.LogTrivial("Continue pressed");
-                Index++;
-                if (Plugins_URL_Errors.Count > Index)
+                case 0:
                 {
-                    Popup pop = new Popup("Error " + (Index + 1) + ": " + Plugins_URL_Errors[Index].Item1, Plugins_URL_Errors[Index].Item3, new List<string>() { "Continue", "Open installation video tutorial for this plugin" },
-                        false, false, NextDependencyErrorCallback);
-                    pop.Display();
-                }
-                else
-                {
-                    Popup pop = new Popup("Albo1125.Common detected errors", "To fix these installation errors, you should read the appropriate ReadMe or documentation files, watch the installation video tutorial or use my Troubleshooter (link in video description).",
-                        new List<string>() { "Continue", "Open installation/troubleshooting video tutorial", "Exit" }, false, false, NextDependencyErrorCallback);
-                    pop.Display();
-                }
-            }
-            else if (p.IndexOfGivenAnswer == 1)
-            {
-                Game.LogTrivial("GoToVideo pressed.");
-                if (Plugins_URL_Errors.Count > Index)
-                {
-                    Process.Start(Plugins_URL_Errors[Index].Item2);
-                }
-                else
-                {
-                    Process.Start("https://youtu.be/af434m72rIo?list=PLEKypmos74W8PMP4k6xmVxpTKdebvJpFb"); 
-                }
-                p.Display();
-            }
-            else if (p.IndexOfGivenAnswer == 2)
-            {
-                Game.LogTrivial("ExitButton pressed.");
-            }
-            
-        }
+                    Game.LogTrivial("Continue pressed");
+                    _index++;
+                    if (PluginsUrlErrors.Count > _index)
+                    {
+                        var popup = new Popup("Error " + (_index + 1) + ": " + PluginsUrlErrors[_index].Item1, PluginsUrlErrors[_index].Item3, new List<string>() { "Continue", "Open installation video tutorial for this plugin" },
+                            false, false, NextDependencyErrorCallback);
+                        popup.Display();
+                    }
+                    else
+                    {
+                        var popup = new Popup("Albo1125.Common detected errors", "To fix these installation errors, you should read the appropriate ReadMe or documentation files, watch the installation video tutorial or use my Troubleshooter (link in video description).",
+                            new List<string>() { "Continue", "Open installation/troubleshooting video tutorial", "Exit" }, false, false, NextDependencyErrorCallback);
+                        popup.Display();
+                    }
 
-        private static bool CorrectRPHVersion;
-
-        private static bool CheckForRageVersion(float MinimumVersion)
-        {
-            string RPHFile = "RAGEPluginHook.exe";
-            string[] files = Directory.GetFiles(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "*.exe", SearchOption.TopDirectoryOnly);
-            foreach (string file in files)
-            {
-                if (Path.GetFileName(file).ToLower() == "ragepluginhook.exe")
-                {
-                    RPHFile = file;
                     break;
                 }
+                case 1:
+                {
+                    Game.LogTrivial("GoToVideo pressed.");
+                    Process.Start(PluginsUrlErrors.Count > _index
+                        ? PluginsUrlErrors[_index].Item2
+                        : "https://youtu.be/af434m72rIo?list=PLEKypmos74W8PMP4k6xmVxpTKdebvJpFb");
+                    errorPopup.Display();
+                    break;
+                }
+                case 2:
+                    Game.LogTrivial("ExitButton pressed.");
+                    break;
+            }
+        }
+
+        private static bool _correctRphVersion;
+
+        /// <summary>
+        /// Checks if the RAGEPluginHook version meets the minimum requirement.
+        /// </summary>
+        /// <param name="minimumVersion">The minimum required RAGEPluginHook version.</param>
+        /// <returns>Returns true if the RAGEPluginHook version is equal or greater than the minimum required version, otherwise false.</returns>
+        private static bool CheckForRageVersion(float minimumVersion)
+        {
+            var rphFile = "RAGEPluginHook.exe";
+            var files = Directory.GetFiles(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? string.Empty, "*.exe", SearchOption.TopDirectoryOnly);
+            
+            foreach (var fileString in files)
+            {
+                if (fileString == string.Empty)
+                    continue;
+                
+                if (Path.GetFileName(fileString).ToLower() != "ragepluginhook.exe") continue;
+                
+                rphFile = fileString;
+                break;
             }
 
-            var versionInfo = FileVersionInfo.GetVersionInfo(RPHFile);
-            float Rageversion;
+            var versionInfo = FileVersionInfo.GetVersionInfo(rphFile);
             try
             {
-                Rageversion = float.Parse(versionInfo.ProductVersion.Substring(0, 4), CultureInfo.InvariantCulture);
-                Game.LogTrivial("Albo1125.Common detected RAGEPluginHook version: " + Rageversion.ToString());
+                var rageVersion = float.Parse(versionInfo.ProductVersion.Substring(0, 4), CultureInfo.InvariantCulture);
+                Game.LogTrivial("Albo1125.Common detected RAGEPluginHook version: " + rageVersion);
 
-                //If user's RPH version is older than the minimum
-                if (Rageversion < MinimumVersion)
-                {
-                    CorrectRPHVersion = false;
-                }
-                //If user's RPH version is (above) the specified minimum
-                else
-                {
-                    CorrectRPHVersion = true;
-                }
+                //Set to false If user's RPH version is older than the minimum, true if user's RPH version is (above) the specified minimum
+                _correctRphVersion = !(rageVersion < minimumVersion);
+                
             }
             catch (Exception e)
             {
                 //If for whatever reason the version couldn't be found.
                 Game.LogTrivial(e.ToString());
                 Game.LogTrivial("Unable to detect your Rage installation.");
-                if (File.Exists("RAGEPluginHook.exe"))
-                {
-                    Game.LogTrivial("RAGEPluginHook.exe exists");
-                }
-                else { Game.LogTrivial("RAGEPluginHook doesn't exist."); }
-                Game.LogTrivial("Rage Version: " + versionInfo.ProductVersion.ToString());
+                Game.LogTrivial(File.Exists("RAGEPluginHook.exe") ? "RAGEPluginHook.exe exists" : "RAGEPluginHook doesn't exist.");
+                Game.LogTrivial("Rage Version: " + versionInfo.ProductVersion);
                 Game.DisplayNotification("Albo1125.Common was unable to detect RPH installation. Please send me your logfile.");
-                CorrectRPHVersion = false;
+                _correctRphVersion = false;
 
             }
 
-            return CorrectRPHVersion;
+            return _correctRphVersion;
         }
     }
 }
