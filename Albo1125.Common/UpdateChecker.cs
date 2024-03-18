@@ -14,166 +14,210 @@ using static Albo1125.Common.UpdateEntry;
 
 namespace Albo1125.Common
 {
+    /// <summary>
+    /// Provides functionality to check for updates and display update information.
+    /// </summary>
     public class UpdateChecker
     {
 
-        private static int Index = -1;
+        private static int _index = -1;
+
+        /// <summary>
+        /// Displays update information to the user.
+        /// </summary>
+        /// <remarks>
+        /// This method will display a popup dialog to the user,
+        /// showing information about available updates for modifications.
+        /// </remarks>
         public static void DisplayUpdates()
         {
-            string ModsWithErrors = "";
-            foreach (string s in PluginsDownloadLink.Select(x => x.Item1).Distinct().ToList())
-            {
-                ModsWithErrors += s + ",";
-            }
-            Popup pop = new Popup("Albo1125.Common Update Check", "Updates are available for the following modifications: " + ModsWithErrors, new List<string>() { "Continue" }, false, false, NextUpdateCallback);
-            pop.Display();
+            var modsWithErrors = PluginsDownloadLink.Select(x => x.Item1).Distinct().ToList().Aggregate("", (current, s) => current + (s + ","));
+            var popup = new Popup("Albo1125.Common Update Check", "Updates are available for the following modifications: " + modsWithErrors, new List<string>() { "Continue" }, false, false, NextUpdateCallback);
+            popup.Display();
         }
 
+
+        /// <summary>
+        /// Callback method for handling the next update in the popup.
+        /// </summary>
+        /// <param name="p">The Popup instance associated with the callback.</param>
         private static void NextUpdateCallback(Popup p)
         {
-            if (p.IndexOfGivenAnswer == 0)
+            switch (p.IndexOfGivenAnswer)
             {
-                Game.LogTrivial("Continue pressed");
-                Index++;
-                if (PluginsDownloadLink.Count > Index)
+                case 0:
                 {
-                    Popup pop = new Popup("Albo1125.Common Update Check", "Update " + (Index + 1) + ": " + PluginsDownloadLink[Index].Item1, new List<string>() { "Continue", "Go to download page" },
-                        false, false, NextUpdateCallback);
-                    pop.Display();
+                    Game.LogTrivial("Continue pressed");
+                    _index++;
+                    if (PluginsDownloadLink.Count > _index)
+                    {
+                        var popup = new Popup("Albo1125.Common Update Check", "Update " + (_index + 1) + ": " + PluginsDownloadLink[_index].Item1, new List<string>() { "Continue", "Go to download page" },
+                            false, false, NextUpdateCallback);
+                        popup.Display();
+                    }
+                    else
+                    {
+                        var popup = new Popup("Albo1125.Common Update Check", "Please install updates to maintain stability and don't request support for old versions.",
+                            new List<string>() { "-", "Open installation/troubleshooting video tutorial", "Continue to game.", "Delay next update check by a week.", "Delay next update check by a month.",
+                                "Fully disable update checks (not recommended)." }, false, false, NextUpdateCallback);
+                        popup.Display();
+                    }
+
+                    break;
                 }
-                else
+                case 1:
                 {
-                    Popup pop = new Popup("Albo1125.Common Update Check", "Please install updates to maintain stability and don't request support for old versions.",
-                        new List<string>() { "-", "Open installation/troubleshooting video tutorial", "Continue to game.", "Delay next update check by a week.", "Delay next update check by a month.",
-                            "Fully disable update checks (not recommended)." }, false, false, NextUpdateCallback);
-                    pop.Display();
+                    Game.LogTrivial("GoToDownload pressed.");
+                    if (PluginsDownloadLink.Count > _index && _index >= 0)
+                    {
+                        Process.Start(PluginsDownloadLink[_index].Item2);
+                    }
+                    else
+                    {
+                        Process.Start("https://youtu.be/af434m72rIo?list=PLEKypmos74W8PMP4k6xmVxpTKdebvJpFb");
+                    }
+                    p.Display();
+                    break;
                 }
-            }
-            else if (p.IndexOfGivenAnswer == 1)
-            {
-                Game.LogTrivial("GoToDownload pressed.");
-                if (PluginsDownloadLink.Count > Index && Index >= 0)
+                case 2:
+                    Game.LogTrivial("ExitButton pressed.");
+                    break;
+                case 3:
                 {
-                    System.Diagnostics.Process.Start(PluginsDownloadLink[Index].Item2);
+                    Game.LogTrivial("Delay by week pressed");
+                    var nextUpdateCheckDateTime = DateTime.Now.AddDays(6);
+                    var commonVariablesDoc = XDocument.Load("Albo1125.Common/CommonVariables.xml");
+
+                    if (commonVariablesDoc.Root != null && commonVariablesDoc.Root.Element("NextUpdateCheckDT") == null)
+                    {
+                        commonVariablesDoc.Root.Add(new XElement("NextUpdateCheckDT"));
+                    }
+                    
+                    commonVariablesDoc.Root.Element("NextUpdateCheckDT").Value = nextUpdateCheckDateTime.ToBinary().ToString();
+                    commonVariablesDoc.Save("Albo1125.Common/CommonVariables.xml");
+                    break;
                 }
-                else
+                case 4:
                 {
-                    System.Diagnostics.Process.Start("https://youtu.be/af434m72rIo?list=PLEKypmos74W8PMP4k6xmVxpTKdebvJpFb");
+                    Game.LogTrivial("Delay by month pressed");
+                    var nextUpdateCheckDateTime = DateTime.Now.AddMonths(1);
+                    var commonVariablesDoc = XDocument.Load("Albo1125.Common/CommonVariables.xml");
+
+                    if (commonVariablesDoc.Root != null && commonVariablesDoc.Root.Element("NextUpdateCheckDT") == null)
+                    {
+                        commonVariablesDoc.Root.Add(new XElement("NextUpdateCheckDT"));
+                    }
+                    
+                    commonVariablesDoc.Root.Element("NextUpdateCheckDT").Value = nextUpdateCheckDateTime.ToBinary().ToString();
+                    commonVariablesDoc.Save("Albo1125.Common/CommonVariables.xml");
+                    break;
                 }
-                p.Display();
-            }
-            else if (p.IndexOfGivenAnswer == 2)
-            {
-                Game.LogTrivial("ExitButton pressed.");
-            }
-            else if (p.IndexOfGivenAnswer == 3)
-            {
-                Game.LogTrivial("Delay by week pressed");
-                DateTime NextUpdateCheckDT = DateTime.Now.AddDays(6);
-                XDocument CommonVariablesDoc = XDocument.Load("Albo1125.Common/CommonVariables.xml");
-                if (CommonVariablesDoc.Root.Element("NextUpdateCheckDT") == null) { CommonVariablesDoc.Root.Add(new XElement("NextUpdateCheckDT")); }
-                CommonVariablesDoc.Root.Element("NextUpdateCheckDT").Value = NextUpdateCheckDT.ToBinary().ToString();
-                CommonVariablesDoc.Save("Albo1125.Common/CommonVariables.xml");
-                CommonVariablesDoc = null;
-            }
-            else if (p.IndexOfGivenAnswer == 4)
-            {
-                Game.LogTrivial("Delay by month pressed");
-                DateTime NextUpdateCheckDT = DateTime.Now.AddMonths(1);
-                XDocument CommonVariablesDoc = XDocument.Load("Albo1125.Common/CommonVariables.xml");
-                if (CommonVariablesDoc.Root.Element("NextUpdateCheckDT") == null) { CommonVariablesDoc.Root.Add(new XElement("NextUpdateCheckDT")); }
-                CommonVariablesDoc.Root.Element("NextUpdateCheckDT").Value = NextUpdateCheckDT.ToBinary().ToString();
-                CommonVariablesDoc.Save("Albo1125.Common/CommonVariables.xml");
-                CommonVariablesDoc = null;
-            }
-            else if (p.IndexOfGivenAnswer == 5)
-            {
-                Game.LogTrivial("Disable Update Checks pressed.");
-                XDocument CommonVariablesDoc = XDocument.Load("Albo1125.Common/CommonVariables.xml");
-                if (CommonVariablesDoc.Root.Element("NextUpdateCheckDT") == null) { CommonVariablesDoc.Root.Add(new XElement("NextUpdateCheckDT")); }
-                CommonVariablesDoc.Root.Element("NextUpdateCheckDT").Value = Assembly.GetExecutingAssembly().GetName().Version.ToString();
-                CommonVariablesDoc.Save("Albo1125.Common/CommonVariables.xml");
-                CommonVariablesDoc = null;
-                Popup pop = new Popup("Albo1125.Common Update Check", "Update checking has been disabled for this version of Albo1125.Common." +
-                    "To re-enable it, delete the Albo1125.Common folder from your Grand Theft Auto V folder. Please do not request support for old versions.", false, true);
-                pop.Display();
+                case 5:
+                {
+                    Game.LogTrivial("Disable Update Checks pressed.");
+                    var commonVariablesDoc = XDocument.Load("Albo1125.Common/CommonVariables.xml");
+                    
+                    if (commonVariablesDoc.Root != null && commonVariablesDoc.Root.Element("NextUpdateCheckDT") == null)
+                    {
+                        commonVariablesDoc.Root.Add(new XElement("NextUpdateCheckDT"));
+                    }
+                    commonVariablesDoc.Root.Element("NextUpdateCheckDT").Value = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+                    
+                    commonVariablesDoc.Save("Albo1125.Common/CommonVariables.xml");
+                    var popup = new Popup("Albo1125.Common Update Check", "Update checking has been disabled for this version of Albo1125.Common." +
+                                                                        "To re-enable it, delete the Albo1125.Common folder from your Grand Theft Auto V folder. Please do not request support for old versions.", false, true);
+                    popup.Display();
+                    break;
+                }
             }
         }
      
-        private static TupleList<string, string> PluginsDownloadLink = new TupleList<string, string>();
+        private static readonly TupleList<string, string> PluginsDownloadLink = new TupleList<string, string>();
 
 
-        private static void CheckForModificationUpdates(string ModificationName, Version curVersion, string VersionCheckLink, string DownloadLink)
+        /// <summary>
+        /// Checks for modification updates.
+        /// </summary>
+        /// <param name="modificationName">The name of the modification.</param>
+        /// <param name="curVersion">The current version of the modification.</param>
+        /// <param name="versionCheckLink">The link to check for updates.</param>
+        /// <param name="downloadLink">The link to download the updates.</param>
+        private static void CheckForModificationUpdates(string modificationName, Version curVersion, string versionCheckLink, string downloadLink)
         {
-            if (LSPDFRUpdateAPIRunning)
+            if (_lspdfrUpdateApiRunning)
             {
-                new UpdateChecker(ModificationName, curVersion, VersionCheckLink, DownloadLink);
-                if (!Albo1125CommonCheckedForUpdates)
-                {
-                    Albo1125CommonCheckedForUpdates = true;
-                    new UpdateChecker("Albo1125.Common", Assembly.GetExecutingAssembly().GetName().Version, "10294", "https://www.lcpdfr.com/files/file/10294-albo1125common/");
-                }
+                new UpdateChecker(modificationName, curVersion, versionCheckLink, downloadLink);
+                if (_albo1125CommonCheckedForUpdates) return;
+                
+                _albo1125CommonCheckedForUpdates = true;
+                new UpdateChecker("Albo1125.Common", Assembly.GetExecutingAssembly().GetName().Version, "10294", "https://www.lcpdfr.com/files/file/10294-albo1125common/");
             }
             else
             {
                 Game.LogTrivial("LSPDFR Update API down. Not starting checks.");
             }
         }
-        private Version NewVersion = new Version();
-        private static bool LSPDFRUpdateAPIRunning = true;
-        private UpdateChecker(string ModificationName, Version curVersion, string FileID, string DownloadLink)
+        private Version _newVersion = new Version();
+        private static bool _lspdfrUpdateApiRunning = true;
+
+        /// <summary>
+        /// Provides functionality to check for updates and display update information.
+        /// </summary>
+        private UpdateChecker(string modificationName, Version curVersion, string fileId, string downloadLink)
         {
 
             try
             {
-                Game.LogTrivial("Albo1125.Common " + Assembly.GetExecutingAssembly().GetName().Version.ToString() + ", developed by Albo1125. Checking for " + ModificationName + " updates.");
+                Game.LogTrivial("Albo1125.Common " + Assembly.GetExecutingAssembly().GetName().Version + ", developed by Albo1125. Checking for " + modificationName + " updates.");
 
-                Thread FetchVersionThread = new Thread(() =>
+                var fetchVersionThread = new Thread(() =>
                 {
 
-                    using (WebClient client = new WebClient())
+                    using (var client = new WebClient())
                     {
                         try
                         {
-                            string s = client.DownloadString("http://www.lcpdfr.com/applications/downloadsng/interface/api.php?do=checkForUpdates&fileId=" + FileID + "&textOnly=1");
+                            var downloadString = client.DownloadString("https://www.lcpdfr.com/applications/downloadsng/interface/api.php?do=checkForUpdates&fileId=" + fileId + "&textOnly=1");
 
-                            NewVersion = new Version(s);
+                            _newVersion = new Version(downloadString);
                         }
-                        catch (Exception e) { LSPDFRUpdateAPIRunning = false; Game.LogTrivial("LSPDFR Update API down. Aborting checks."); }
+                        catch (Exception) { _lspdfrUpdateApiRunning = false; Game.LogTrivial("LSPDFR Update API down. Aborting checks."); }
                     }
                 });
-                FetchVersionThread.Start();
-                while (FetchVersionThread.ThreadState != System.Threading.ThreadState.Stopped)
+                fetchVersionThread.Start();
+                while (fetchVersionThread.ThreadState != System.Threading.ThreadState.Stopped)
                 {
                     GameFiber.Yield();
                 }
 
                 // compare the versions  
-                if (curVersion.CompareTo(NewVersion) < 0)
-                {
-                    // ask the user if he would like  
-                    // to download the new version  
-                    PluginsDownloadLink.Add(ModificationName, DownloadLink);
-                    Game.LogTrivial("Update available for " + ModificationName);
-                }
+                if (curVersion.CompareTo(_newVersion) >= 0) return;
+                
+                // ask the user if he would like  
+                // to download the new version  
+                PluginsDownloadLink.Add(modificationName, downloadLink);
+                Game.LogTrivial("Update available for " + modificationName);
 
             }
-            catch (System.Threading.ThreadAbortException e)
+            catch (ThreadAbortException)
             {
 
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Game.LogTrivial("Error while checking " + ModificationName + " for updates.");
+                Game.LogTrivial("Error while checking " + modificationName + " for updates.");
             }
         }
 
 
-        private static bool Albo1125CommonCheckedForUpdates = false;
+        private static bool _albo1125CommonCheckedForUpdates = false;
 
+        /// <summary>
+        /// Initialize the update checking process.
+        /// </summary>
         public static void InitialiseUpdateCheckingProcess()
         {
-            Game.LogTrivial("Albo1125.Common " + Assembly.GetExecutingAssembly().GetName().Version.ToString() + ", developed by Albo1125. Starting update checks.");
+            Game.LogTrivial("Albo1125.Common " + Assembly.GetExecutingAssembly().GetName().Version + ", developed by Albo1125. Starting update checks.");
             Directory.CreateDirectory("Albo1125.Common/UpdateInfo");
             if (!File.Exists("Albo1125.Common/CommonVariables.xml"))
             {
@@ -184,24 +228,28 @@ namespace Albo1125.Common
             }
             try
             {
-                XDocument CommonVariablesDoc = XDocument.Load("Albo1125.Common/CommonVariables.xml");
-                if (CommonVariablesDoc.Root.Element("NextUpdateCheckDT") == null) { CommonVariablesDoc.Root.Add(new XElement("NextUpdateCheckDT")); }
-                if (!string.IsNullOrWhiteSpace((string)CommonVariablesDoc.Root.Element("NextUpdateCheckDT")))
+                var commonVariablesDoc = XDocument.Load("Albo1125.Common/CommonVariables.xml");
+                if (commonVariablesDoc.Root != null && commonVariablesDoc.Root.Element("NextUpdateCheckDT") == null)
+                {
+                    commonVariablesDoc.Root.Add(new XElement("NextUpdateCheckDT"));
+                }
+                
+                if (!string.IsNullOrWhiteSpace((string)commonVariablesDoc.Root.Element("NextUpdateCheckDT")))
                 {
 
                     try
                     {
-                        if (CommonVariablesDoc.Root.Element("NextUpdateCheckDT").Value == Assembly.GetExecutingAssembly().GetName().Version.ToString())
+                        if (commonVariablesDoc.Root.Element("NextUpdateCheckDT")?.Value == Assembly.GetExecutingAssembly().GetName().Version.ToString())
                         {
                             Game.LogTrivial("Albo1125.Common update checking has been disabled. Skipping checks.");
                             Game.LogTrivial("Albo1125.Common note: please do not request support for old versions.");
                             return;
                         }
-                        DateTime UpdateCheckDT = DateTime.FromBinary(long.Parse(CommonVariablesDoc.Root.Element("NextUpdateCheckDT").Value));
-                        if (DateTime.Now < UpdateCheckDT)
+                        var updateCheckDateTime = DateTime.FromBinary(long.Parse(commonVariablesDoc.Root.Element("NextUpdateCheckDT").Value));
+                        if (DateTime.Now < updateCheckDateTime)
                         {
 
-                            Game.LogTrivial("Albo1125.Common " + Assembly.GetExecutingAssembly().GetName().Version.ToString() + ", developed by Albo1125. Not checking for updates until " + UpdateCheckDT.ToString());
+                            Game.LogTrivial("Albo1125.Common " + Assembly.GetExecutingAssembly().GetName().Version + ", developed by Albo1125. Not checking for updates until " + updateCheckDateTime);
                             return;
                         }
                     }
@@ -210,30 +258,34 @@ namespace Albo1125.Common
                 }
 
                 
-                DateTime NextUpdateCheckDT = DateTime.Now.AddDays(1);
-                if (CommonVariablesDoc.Root.Element("NextUpdateCheckDT") == null) { CommonVariablesDoc.Root.Add(new XElement("NextUpdateCheckDT")); }
-                CommonVariablesDoc.Root.Element("NextUpdateCheckDT").Value = NextUpdateCheckDT.ToBinary().ToString();
-                CommonVariablesDoc.Save("Albo1125.Common/CommonVariables.xml");
-                CommonVariablesDoc = null;
+                var nextUpdateCheckDt = DateTime.Now.AddDays(1);
+                if (commonVariablesDoc.Root.Element("NextUpdateCheckDT") == null)
+                {
+                    commonVariablesDoc.Root.Add(new XElement("NextUpdateCheckDT")); 
+                    
+                }
+                
+                commonVariablesDoc.Root.Element("NextUpdateCheckDT").Value = nextUpdateCheckDt.ToBinary().ToString();
+                commonVariablesDoc.Save("Albo1125.Common/CommonVariables.xml");
                 GameFiber.StartNew(delegate
                 {
 
 
                     GetUpdateNodes();
-                    foreach (UpdateEntry entry in AllUpdateEntries.ToArray())
+                    foreach (var entry in AllUpdateEntries.ToArray())
                     {
-                        CheckForModificationUpdates(entry.Name, new Version(FileVersionInfo.GetVersionInfo(entry.Path).FileVersion), entry.FileID, entry.DownloadLink);
+                        CheckForModificationUpdates(entry.Name, new Version(FileVersionInfo.GetVersionInfo(entry.Path).FileVersion), entry.FileId, entry.DownloadLink);
                     }
                     if (PluginsDownloadLink.Count > 0) { DisplayUpdates(); }
-                    Game.LogTrivial("Albo1125.Common " + Assembly.GetExecutingAssembly().GetName().Version.ToString() + ", developed by Albo1125. Update checks complete.");
+                    Game.LogTrivial("Albo1125.Common " + Assembly.GetExecutingAssembly().GetName().Version + ", developed by Albo1125. Update checks complete.");
                 });
             }
-            catch (System.Xml.XmlException e)
+            catch (XmlException e)
             {
                 Game.LogTrivial(e.ToString());
                 Game.DisplayNotification("Error while processing XML files. To fix this, please delete the following folder and its contents: Grand Theft Auto V/Albo1125.Common");
-                Albo1125.Common.CommonLibrary.ExtensionMethods.DisplayPopupTextBoxWithConfirmation("Albo1125.Common", "Error while processing XML files. To fix this, please delete the following folder and its contents: Grand Theft Auto V/Albo1125.Common", false);
-                throw e;
+                ExtensionMethods.DisplayPopupTextBoxWithConfirmation("Albo1125.Common", "Error while processing XML files. To fix this, please delete the following folder and its contents: Grand Theft Auto V/Albo1125.Common", false);
+                throw;
             }
 
             
@@ -242,10 +294,17 @@ namespace Albo1125.Common
 
         }
 
-        public static void VerifyXmlNodeExists(string Name, string FileID, string DownloadLink, string Path)
+        /// <summary>
+        /// Verifies that the specified XML node exists and creates a new entry for it.
+        /// </summary>
+        /// <param name="name">The name of the XML node.</param>
+        /// <param name="fileId">The file ID of the XML node.</param>
+        /// <param name="downloadLink">The download link of the XML node.</param>
+        /// <param name="path">The path of the XML node.</param>
+        public static void VerifyXmlNodeExists(string name, string fileId, string downloadLink, string path)
         {        
-            Game.LogTrivial("Albo1125.Common verifying update entry for " + Name);
-            XDocument xdoc =
+            Game.LogTrivial("Albo1125.Common verifying update entry for " + name);
+            var doc =
 
                     new XDocument(
                             new XElement("UpdateEntry")
@@ -255,72 +314,80 @@ namespace Albo1125.Common
             {
                 Directory.CreateDirectory("Albo1125.Common/UpdateInfo");
 
-                xdoc.Root.Add(new XElement("Name"));
-                xdoc.Root.Element("Name").Value = XmlConvert.EncodeName(Name);
+                doc.Root.Add(new XElement("Name"));
+                doc.Root.Element("Name").Value = XmlConvert.EncodeName(name);
 
-                xdoc.Root.Add(new XElement("FileID"));
-                xdoc.Root.Element("FileID").Value = FileID;
+                doc.Root.Add(new XElement("FileID"));
+                doc.Root.Element("FileID").Value = fileId;
 
-                xdoc.Root.Add(new XElement("DownloadLink"));
-                xdoc.Root.Element("DownloadLink").Value = XmlConvert.EncodeName(DownloadLink);
+                doc.Root.Add(new XElement("DownloadLink"));
+                doc.Root.Element("DownloadLink").Value = XmlConvert.EncodeName(downloadLink);
 
-                xdoc.Root.Add(new XElement("Path"));
+                doc.Root.Add(new XElement("Path"));
 
-                xdoc.Root.Element("Path").Value = XmlConvert.EncodeName(Path);
+                doc.Root.Element("Path").Value = XmlConvert.EncodeName(path);
 
-                xdoc.Save("Albo1125.Common/UpdateInfo/" + Name + ".xml");
+                doc.Save("Albo1125.Common/UpdateInfo/" + name + ".xml");
                 
             }
-            catch (System.Xml.XmlException e)
+            catch (XmlException e)
             {
                 Game.LogTrivial(e.ToString());
                 Game.DisplayNotification("Error while processing XML files. To fix this, please delete the following folder and its contents: Grand Theft Auto V/Albo1125.Common");
                 ExtensionMethods.DisplayPopupTextBoxWithConfirmation("Albo1125.Common", "Error while processing XML files. To fix this, please delete the following folder and its contents: Grand Theft Auto V/Albo1125.Common", false);
-                throw e;
+                throw;
             }
 
         }
 
+        /// <summary>
+        /// GetUpdateNodes method retrieves update nodes from XML files and adds valid entries to the AllUpdateEntries list.
+        /// </summary>
         private static void GetUpdateNodes()
         {
-            IEnumerable<string> XMLUpdateFiles = Directory.EnumerateFiles("Albo1125.Common/UpdateInfo", "*.xml");
-            foreach (string xmlnode in XMLUpdateFiles)
+            var xmlUpdateFiles = Directory.EnumerateFiles("Albo1125.Common/UpdateInfo", "*.xml");
+            foreach (var xmlNode in xmlUpdateFiles)
             {
-                XDocument xdoc = XDocument.Load(xmlnode);
-                if (IsUpdateNodeValid(xdoc.Root))
+                var doc = XDocument.Load(xmlNode);
+                if (IsUpdateNodeValid(doc.Root))
                 {
-                    if (File.Exists(XmlConvert.DecodeName(xdoc.Root.Element("Path").Value.Trim())))
+                    if (File.Exists(XmlConvert.DecodeName(doc.Root.Element("Path").Value.Trim())))
                     {
                         AllUpdateEntries.Add(new UpdateEntry()
                         {
-                            Name = XmlConvert.DecodeName(xdoc.Root.Element("Name").Value.Trim()),
-                            FileID = xdoc.Root.Element("FileID").Value.Trim(),
-                            DownloadLink = XmlConvert.DecodeName(xdoc.Root.Element("DownloadLink").Value.Trim()),
-                            Path = XmlConvert.DecodeName(xdoc.Root.Element("Path").Value.Trim()),
+                            Name = XmlConvert.DecodeName(doc.Root.Element("Name").Value.Trim()),
+                            FileId = doc.Root.Element("FileID").Value.Trim(),
+                            DownloadLink = XmlConvert.DecodeName(doc.Root.Element("DownloadLink").Value.Trim()),
+                            Path = XmlConvert.DecodeName(doc.Root.Element("Path").Value.Trim()),
 
                         });
                     }
                 }
-                xdoc = null;
-
-
             }
             
 
         }
 
-        private static bool IsUpdateNodeValid(XElement root)
+        /// <summary>
+        /// Checks if an update node in an XML document is valid.
+        /// </summary>
+        /// <param name="root">The root container of the XML document.</param>
+        /// <returns>True if the update node is valid, otherwise false.</returns>
+        private static bool IsUpdateNodeValid(XContainer root)
         {
-            return new string[] { "Name", "FileID", "DownloadLink", "Path" }.All(s => root.Elements().Select(x => x.Name.ToString()).Contains(s)) && root.Elements().All(s => !string.IsNullOrWhiteSpace(s.Value));
+            return new[] { "Name", "FileID", "DownloadLink", "Path" }.All(s => root.Elements().Select(x => x.Name.ToString()).Contains(s)) && root.Elements().All(s => !string.IsNullOrWhiteSpace(s.Value));
         }
     }
 
+    /// <summary>
+    /// Represents an update entry for a modification.
+    /// </summary>
     internal class UpdateEntry
     {
-        public static List<UpdateEntry> AllUpdateEntries = new List<UpdateEntry>();
+        public static readonly List<UpdateEntry> AllUpdateEntries = new List<UpdateEntry>();
 
         public string Name;
-        public string FileID;
+        public string FileId;
         public string DownloadLink;
         public string Path;
     }
