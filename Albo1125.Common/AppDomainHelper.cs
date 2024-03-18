@@ -72,8 +72,7 @@
                 host.EnumDomains(out enumHandle);
                 while (true)
                 {
-                    object domain;
-                    host.NextDomain(enumHandle, out domain);
+                    host.NextDomain(enumHandle, out var domain);
                     if (domain == null) break;
                     AppDomain appDomain = (AppDomain)domain;
                     domains.Add(appDomain);
