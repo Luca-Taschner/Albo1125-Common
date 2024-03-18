@@ -38,43 +38,43 @@
 
         private static void InvokedOnAppDomain()
         {
-            AppDomain currentAppDomain = AppDomain.CurrentDomain;
-            string name = currentAppDomain.FriendlyName;
+            var currentAppDomain = AppDomain.CurrentDomain;
+            var nameString = currentAppDomain.FriendlyName;
 
             // Grab payload.
-            object[] payload = (object[])currentAppDomain.GetData(name + "_payload");
-            CrossAppDomainCallDelegate func = (CrossAppDomainCallDelegate)currentAppDomain.GetData(name + "_func");
+            var payload = (object[])currentAppDomain.GetData(nameString + "_payload");
+            var callDelegate = (CrossAppDomainCallDelegate)currentAppDomain.GetData(nameString + "_func");
 
-            func.Invoke(payload);
+            callDelegate.Invoke(payload);
         }
 
         private static void InvokedOnAppDomainRet()
         {
-            AppDomain currentAppDomain = AppDomain.CurrentDomain;
-            string name = currentAppDomain.FriendlyName;
+            var currentAppDomain = AppDomain.CurrentDomain;
+            var friendlyNameString = currentAppDomain.FriendlyName;
 
             // Grab payload.
-            object[] payload = (object[])currentAppDomain.GetData(name + "_payload");
-            CrossAppDomainCallRetValueDelegate func = (CrossAppDomainCallRetValueDelegate)currentAppDomain.GetData(name + "_func");
+            var payload = (object[])currentAppDomain.GetData(friendlyNameString + "_payload");
+            var retValueDelegate = (CrossAppDomainCallRetValueDelegate)currentAppDomain.GetData(friendlyNameString + "_func");
 
-            object result = func.Invoke(payload);
+            var result = retValueDelegate.Invoke(payload);
             currentAppDomain.SetData("result", result);
         }
 
         public static IList<AppDomain> GetAppDomains()
         {
             IList<AppDomain> domains = new List<AppDomain>();
-            IntPtr enumHandle = IntPtr.Zero;
+            var enumHandlePtr = IntPtr.Zero;
             ICorRuntimeHost host = new CorRuntimeHost();
 
             try
             {
-                host.EnumDomains(out enumHandle);
+                host.EnumDomains(out enumHandlePtr);
                 while (true)
                 {
-                    host.NextDomain(enumHandle, out var domain);
+                    host.NextDomain(enumHandlePtr, out var domain);
                     if (domain == null) break;
-                    AppDomain appDomain = (AppDomain)domain;
+                    var appDomain = (AppDomain)domain;
                     domains.Add(appDomain);
                 }
 
@@ -82,7 +82,7 @@
             }
             finally
             {
-                host.CloseEnum(enumHandle);
+                host.CloseEnum(enumHandlePtr);
                 Marshal.ReleaseComObject(host);
             }
         }
