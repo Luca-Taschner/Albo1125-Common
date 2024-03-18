@@ -1,48 +1,68 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using System.Windows.Forms;
 
 namespace Albo1125.Common.CommonLibrary
 {
+    /// <summary>
+    /// Represents a utility class for generating friendly keys.
+    /// </summary>
     public static class FriendlyKeys
     {
-        public static string GetFriendlyNames(Keys modifier, Keys key, bool format = true, char format_color = 'b')
+        /// <summary>
+        /// Returns a formatted string that represents the friendly names of the modifier key and the key.
+        /// </summary>
+        /// <param name="modifier">The modifier key.</param>
+        /// <param name="key">The key.</param>
+        /// <param name="format">Specifies whether to format the friendly names.</param>
+        /// <param name="formatColor">Specifies the format color. Default is 'b'.</param>
+        /// <returns>
+        /// A formatted string that represents the friendly names of the modifier key and the key.
+        /// </returns>
+        public static string GetFriendlyNames(Keys modifier, Keys key, bool format = true, char formatColor = 'b')
         {
-            string output = "";
+            var output = "";
             if (modifier != Keys.None)
             {
-                output += GetFriendlyName(modifier, format, format_color) + " + ";
+                output += GetFriendlyName(modifier, format, formatColor) + " + ";
             }
-            output += GetFriendlyName(key, format, format_color);
+            output += GetFriendlyName(key, format, formatColor);
             return output;
         }
 
-        public static string GetFriendlyName(Keys key, bool format = true, char format_color = 'b')
+        /// <summary>
+        /// Retrieves the friendly name of the given key.
+        /// </summary>
+        /// <param name="key">The key whose friendly name is to be retrieved.</param>
+        /// <param name="format">Indicates whether to apply formatting to the friendly name. Defaults to true.</param>
+        /// <param name="formatColor">The color to be used in the formatting. Defaults to 'b'.</param>
+        /// <returns>The friendly name of the key.</returns>
+        public static string GetFriendlyName(Keys key, bool format = true, char formatColor = 'b')
         {
-            string key_name = key.ToString();
-            bool key_found = KeysToFriendlyName.TryGetValue(key, out key_name);
+            KeysToFriendlyName.TryGetValue(key, out var keyName);
             if (format)
             {
-                return "~" + format_color + "~~h~" + key_name + "~h~~w~";
+                return "~" + formatColor + "~~h~" + keyName + "~h~~w~";
             }
-            else
-            {
-                return key_name;
-            }
+
+            return keyName;
         }
 
-        public static string FriendlyName(this Keys key, bool format = true, char format_color = 'b')
+        /// <summary>
+        /// Returns the friendly name of the specified key.
+        /// </summary>
+        /// <param name="key">The key for which to retrieve the friendly name.</param>
+        /// <param name="format">Indicates whether the friendly name should be formatted.</param>
+        /// <param name="formatColor">The formatting color for the friendly name.</param>
+        /// <returns>The friendly name of the specified key.</returns>
+        public static string FriendlyName(this Keys key, bool format = true, char formatColor = 'b')
         {
-            return GetFriendlyName(key, format, format_color);
+            return GetFriendlyName(key, format, formatColor);
         }
 
         /// <summary>
         /// A lookup dictionary to take you from a Keys enumeration to a printable friendly name for the key.
         /// </summary>
-        internal static Dictionary<Keys, string> KeysToFriendlyName = new Dictionary<Keys, string>
+        internal static readonly Dictionary<Keys, string> KeysToFriendlyName = new Dictionary<Keys, string>
     {
         // Credit to PeterU for creating this list
         {Keys.A,"A"},
