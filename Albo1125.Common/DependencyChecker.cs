@@ -1,20 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 using Rage;
 using System.Diagnostics;
 using System.Globalization;
-using System.Windows.Forms;
 using System.Reflection;
-using System.Drawing;
-using System.Threading;
 using Albo1125.Common.CommonLibrary;
 using Rage.Native;
-using System.Net;
-using Microsoft.Win32;
 
 namespace Albo1125.Common
 {
