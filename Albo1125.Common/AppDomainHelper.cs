@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Albo1125.Common
+﻿namespace Albo1125.Common
 {
     //Thank you LMS for your help in writing this class.
     using System;
