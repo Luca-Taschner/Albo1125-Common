@@ -1,26 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Rage;
+﻿using Rage;
 using LSPD_First_Response.Mod.API;
-using LSPD_First_Response.Engine.Scripting.Entities;
 
 namespace Albo1125.Common.CommonLibrary
 {
-    public static class ExtensionMethodsLSPDFR
+    public static class ExtensionMethodsLspdfr
     {
-        public static Ped ClonePed(this Ped oldped, bool ClonePersona)
+        /// <summary>
+        /// Clones a Ped object.
+        /// </summary>
+        /// <param name="oldPed">The original Ped object to clone.</param>
+        /// <param name="cloneOldPed">Determines whether to clone the old Ped's personality settings as well.</param>
+        /// <returns>A new Ped object with the same properties as the original Ped.</returns>
+        public static Ped ClonePed(this Ped oldPed, bool cloneOldPed)
         {
-            Persona oldpers = Functions.GetPersonaForPed(oldped);
-            Ped NewPed = oldped.ClonePed();
-            if (ClonePersona)
+            var oldPersona = Functions.GetPersonaForPed(oldPed);
+            var newPed = oldPed.ClonePed();
+            if (cloneOldPed)
             {
-                Functions.SetPersonaForPed(NewPed, oldpers);
+                Functions.SetPersonaForPed(newPed, oldPersona);
 
             }
-            return NewPed;
+            return newPed;
         }
 
 
