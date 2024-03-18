@@ -6,16 +6,19 @@ using System.Windows.Forms;
 
 namespace Albo1125.Common.CommonLibrary
 {
+    /// <summary>
+    /// Represents a spawn point in the game world.
+    /// </summary>
     public class SpawnPoint
     {
         public Vector3 Position = Vector3.Zero;
-        public float Heading = 0;
+        public readonly float Heading;
 
         public SpawnPoint() { }
-        public SpawnPoint(Vector3 Position, float Heading)
+        public SpawnPoint(Vector3 position, float heading)
         {
-            this.Position = Position;
-            this.Heading = Heading;
+            Position = position;
+            Heading = heading;
         }
 
         public static implicit operator Vector3(SpawnPoint s)
@@ -30,116 +33,141 @@ namespace Albo1125.Common.CommonLibrary
 
     }
 
+    /// <summary>
+    /// Provides extension methods for the SpawnPoint class.
+    /// </summary>
     public static class SpawnPointExtensions
     {
+        /// <summary>
+        /// Gets the closest major vehicle node to the given start point.
+        /// </summary>
+        /// <param name="startPoint">The start point for which to find the closest major vehicle node.</param>
+        /// <returns>The closest major vehicle node to the start point.</returns>
         public static Vector3 GetClosestMajorVehicleNode(this Vector3 startPoint)
         {
-            Vector3 ClosestMajorVehicleNode;
-
-            Rage.Native.NativeFunction.Natives.GET_CLOSEST_MAJOR_VEHICLE_NODE<bool>(startPoint.X, startPoint.Y, startPoint.Z, out ClosestMajorVehicleNode, 3.0f, 0f);
-            return ClosestMajorVehicleNode;
+            NativeFunction.Natives.GET_CLOSEST_MAJOR_VEHICLE_NODE<bool>(startPoint.X, startPoint.Y, startPoint.Z, out Vector3 closestMajorVehicleNode, 3.0f, 0f);
+            return closestMajorVehicleNode;
             
         }
 
-        public static unsafe bool GetSafeVector3ForPed(this Vector3 StartPoint, out Vector3 SafePedPoint)
+        /// <summary>
+        /// Gets a safe Vector3 position for a ped.
+        /// </summary>
+        /// <param name="startPoint">The starting position from which to find a safe location.</param>
+        /// <param name="safePedPoint">The safe Vector3 position for the ped.</param>
+        /// <returns>True if a safe ped position is found, false otherwise.</returns>
+        public static bool GetSafeVector3ForPed(this Vector3 startPoint, out Vector3 safePedPoint)
         {
-            Vector3 tempspawn;
-            if (!NativeFunction.Natives.GET_SAFE_COORD_FOR_PED<bool>(StartPoint.X, StartPoint.Y, StartPoint.Z, true, out tempspawn, 0))
+            if (!NativeFunction.Natives.GET_SAFE_COORD_FOR_PED<bool>(startPoint.X, startPoint.Y, startPoint.Z, true, out Vector3 tempSpawn, 0))
             {
-                tempspawn = World.GetNextPositionOnStreet(StartPoint);
-                Entity nearbyentity = World.GetClosestEntity(tempspawn, 25f, GetEntitiesFlags.ConsiderHumanPeds);
-                if (nearbyentity.Exists())
+                tempSpawn = World.GetNextPositionOnStreet(startPoint);
+                var nearbyEntity = World.GetClosestEntity(tempSpawn, 25f, GetEntitiesFlags.ConsiderHumanPeds);
+                if (nearbyEntity.Exists())
                 {
-                    tempspawn = nearbyentity.Position;
-                    SafePedPoint = tempspawn;
+                    tempSpawn = nearbyEntity.Position;
+                    safePedPoint = tempSpawn;
                     return true;
                 }
-                else
-                {
-                    SafePedPoint = tempspawn;
-                    return false;
-                }
+
+                safePedPoint = tempSpawn;
+                return false;
             }
-            SafePedPoint = tempspawn;
+            safePedPoint = tempSpawn;
             return true;
         }
 
-        public static bool GetClosestVehicleSpawnPoint(this Vector3 SearchPoint, out SpawnPoint sp)
+        /// <summary>
+        /// Gets the closest vehicle spawn point based on a search point.
+        /// </summary>
+        /// <param name="searchPoint">The point to search from.</param>
+        /// <param name="sp">The closest vehicle spawn point.</param>
+        /// <returns>True if a guaranteed spawn point is found; otherwise, false.</returns>
+        public static bool GetClosestVehicleSpawnPoint(this Vector3 searchPoint, out SpawnPoint sp)
         {
-            Vector3 TempSpawnPoint;
-            float TempHeading;
-            bool GuaranteedSpawnPointFound = true;
-            unsafe
+            var guaranteedSpawnPointFound = true;
+            
+            if (!NativeFunction.Natives.GET_CLOSEST_VEHICLE_NODE_WITH_HEADING<bool>(searchPoint.X, searchPoint.Y, searchPoint.Z, out Vector3 tempSpawnPoint, out float tempHeading, 1, 0x40400000, 0) || !tempSpawnPoint.IsNodeSafe())
             {
-                if (!NativeFunction.Natives.GET_CLOSEST_VEHICLE_NODE_WITH_HEADING<bool>(SearchPoint.X, SearchPoint.Y, SearchPoint.Z, out TempSpawnPoint, out TempHeading, 1, 0x40400000, 0) || !Albo1125.Common.CommonLibrary.ExtensionMethods.IsNodeSafe(TempSpawnPoint))
+                tempSpawnPoint = World.GetNextPositionOnStreet(searchPoint);
+
+                var closestEntity = World.GetClosestEntity(tempSpawnPoint, 30f, GetEntitiesFlags.ConsiderGroundVehicles | GetEntitiesFlags.ExcludeEmptyVehicles | GetEntitiesFlags.ExcludePlayerVehicle);
+                if (closestEntity.Exists())
                 {
-                    TempSpawnPoint = World.GetNextPositionOnStreet(SearchPoint);
+                    tempSpawnPoint = closestEntity.Position;
+                    tempHeading = closestEntity.Heading;
+                    closestEntity.Delete();
+                }
+                else
+                {
+                    Vector3 directionFromSpawnToPlayer = (Game.LocalPlayer.Character.Position - tempSpawnPoint);
+                    directionFromSpawnToPlayer.Normalize();
 
-                    Entity closestent = World.GetClosestEntity(TempSpawnPoint, 30f, GetEntitiesFlags.ConsiderGroundVehicles | GetEntitiesFlags.ExcludeEmptyVehicles | GetEntitiesFlags.ExcludePlayerVehicle);
-                    if (closestent.Exists())
-                    {
-                        TempSpawnPoint = closestent.Position;
-                        TempHeading = closestent.Heading;
-                        closestent.Delete();
-                    }
-                    else
-                    {
-                        Vector3 directionFromSpawnToPlayer = (Game.LocalPlayer.Character.Position - TempSpawnPoint);
-                        directionFromSpawnToPlayer.Normalize();
-
-                        TempHeading = MathHelper.ConvertDirectionToHeading(directionFromSpawnToPlayer) + 180f;
-                        GuaranteedSpawnPointFound = false;
-                    }
+                    tempHeading = MathHelper.ConvertDirectionToHeading(directionFromSpawnToPlayer) + 180f;
+                    guaranteedSpawnPointFound = false;
                 }
             }
-            sp = new SpawnPoint(TempSpawnPoint, TempHeading);
-            return GuaranteedSpawnPointFound;
+
+            sp = new SpawnPoint(tempSpawnPoint, tempHeading);
+            return guaranteedSpawnPointFound;
         }
 
 
-        public static bool GetVehicleSpawnPointTowardsStartPoint(this Vector3 StartPoint, float SpawnDistance, bool UseSpecialID, out SpawnPoint sp)
+        /// <summary>
+        /// Gets the vehicle spawn point towards the start point with given parameters.
+        /// </summary>
+        /// <param name="startPoint">The start point.</param>
+        /// <param name="spawnDistance">The distance from the start point to the spawn point.</param>
+        /// <param name="useSpecialId">Determines whether to use special ID.</param>
+        /// <param name="sp">The vehicle spawn point.</param>
+        /// <returns>True if special ID is used; otherwise, false.</returns>
+        public static bool GetVehicleSpawnPointTowardsStartPoint(this Vector3 startPoint, float spawnDistance, bool useSpecialId, out SpawnPoint sp)
         {
-            Vector3 tempspawn = World.GetNextPositionOnStreet(StartPoint.Around2D(SpawnDistance + 5f));
-            Vector3 spawnPoint = Vector3.Zero;
-            float Heading = 0;
-            bool specialIDused = true;
-            if (!UseSpecialID || !NativeFunction.Natives.GET_NTH_CLOSEST_VEHICLE_NODE_FAVOUR_DIRECTION<bool>(tempspawn.X, tempspawn.Y, tempspawn.Z, StartPoint.X, StartPoint.Y, StartPoint.Z, 0, out spawnPoint, out Heading, 0, 0x40400000, 0) || !ExtensionMethods.IsNodeSafe(spawnPoint))
+            var tempSpawn = World.GetNextPositionOnStreet(startPoint.Around2D(spawnDistance + 5f));
+            var spawnPoint = Vector3.Zero;
+            float heading = 0;
+            var specialIdUsed = true;
+            if (!useSpecialId || !NativeFunction.Natives.GET_NTH_CLOSEST_VEHICLE_NODE_FAVOUR_DIRECTION<bool>(tempSpawn.X, tempSpawn.Y, tempSpawn.Z, startPoint.X, startPoint.Y, startPoint.Z, 0, out spawnPoint, out heading, 0, 0x40400000, 0) || !spawnPoint.IsNodeSafe())
             {
-                spawnPoint = World.GetNextPositionOnStreet(StartPoint.Around2D(SpawnDistance + 5f));
-                Vector3 directionFromVehicleToPed1 = (StartPoint - spawnPoint);
+                spawnPoint = World.GetNextPositionOnStreet(startPoint.Around2D(spawnDistance + 5f));
+                var directionFromVehicleToPed1 = (startPoint - spawnPoint);
                 directionFromVehicleToPed1.Normalize();
 
-                Heading = MathHelper.ConvertDirectionToHeading(directionFromVehicleToPed1);
-                specialIDused = false;
+                heading = MathHelper.ConvertDirectionToHeading(directionFromVehicleToPed1);
+                specialIdUsed = false;
             }
             
-            sp = new SpawnPoint(spawnPoint, Heading);
-            return specialIDused;
+            sp = new SpawnPoint(spawnPoint, heading);
+            return specialIdUsed;
         }
 
-        public static SpawnPoint GetVehicleSpawnPointTowardsPositionWithChecks(this Vector3 StartPoint, float SpawnDistance)
+        /// <summary>
+        /// Gets the vehicle spawn point towards the given position with checks.
+        /// </summary>
+        /// <param name="startPoint">The start point from which to find the vehicle spawn point.</param>
+        /// <param name="spawnDistance">The maximum spawn distance of the vehicle from the start point.</param>
+        /// <returns>The vehicle spawn point towards the position.</returns>
+        public static SpawnPoint GetVehicleSpawnPointTowardsPositionWithChecks(this Vector3 startPoint, float spawnDistance)
         {
-            SpawnPoint sp = new SpawnPoint();
-            bool UseSpecialID = true;
-            float travelDistance;
-            int waitCount = 0;
+            SpawnPoint spawnPoint;
+            var useSpecialId = true;
+            var waitCount = 0;
             while (true)
             {
-                GetVehicleSpawnPointTowardsStartPoint(StartPoint, SpawnDistance, UseSpecialID, out sp);
-                travelDistance = Rage.Native.NativeFunction.Natives.CALCULATE_TRAVEL_DISTANCE_BETWEEN_POINTS<float>(sp.Position.X, sp.Position.Y, sp.Position.Z, StartPoint.X, StartPoint.Y, StartPoint.Z);
+                GetVehicleSpawnPointTowardsStartPoint(startPoint, spawnDistance, useSpecialId, out spawnPoint);
+                float travelDistance = NativeFunction.Natives.CALCULATE_TRAVEL_DISTANCE_BETWEEN_POINTS<float>(spawnPoint.Position.X, spawnPoint.Position.Y, spawnPoint.Position.Z, startPoint.X, startPoint.Y, startPoint.Z);
                 waitCount++;
-                if (Vector3.Distance(StartPoint, sp) > SpawnDistance - 15f)
+                if (Vector3.Distance(startPoint, spawnPoint) > spawnDistance - 15f)
                 {
 
-                    if (travelDistance < (SpawnDistance * 4.5f))
+                    if (travelDistance < (spawnDistance * 4.5f))
                     {
 
-                        Vector3 directionFromVehicleToPed1 = (StartPoint - sp.Position);
+                        var directionFromVehicleToPed1 = (startPoint - spawnPoint.Position);
                         directionFromVehicleToPed1.Normalize();
 
-                        float HeadingToPlayer = MathHelper.ConvertDirectionToHeading(directionFromVehicleToPed1);
+                        var headingToPlayer = MathHelper.ConvertDirectionToHeading(directionFromVehicleToPed1);
 
-                        if (Math.Abs(MathHelper.NormalizeHeading(sp.Heading) - MathHelper.NormalizeHeading(HeadingToPlayer)) < 150f)
+                        if (Math.Abs(MathHelper.NormalizeHeading(spawnPoint.Heading) - MathHelper.NormalizeHeading(headingToPlayer)) < 150f)
                         {
                             break;
                         }
@@ -147,20 +175,20 @@ namespace Albo1125.Common.CommonLibrary
                 }
                 if (waitCount >= 400)
                 {
-                    UseSpecialID = false;
+                    useSpecialId = false;
                 }
                 if (waitCount == 600)
                 {
                     Game.DisplayNotification("Press ~b~Y ~s~to force a spawn in the ~g~wilderness.");
                 }
-                if ((waitCount >= 600) && Albo1125.Common.CommonLibrary.ExtensionMethods.IsKeyDownComputerCheck(Keys.Y))
+                if ((waitCount >= 600) && ExtensionMethods.IsKeyDownComputerCheck(Keys.Y))
                 {
                     return new SpawnPoint(Game.LocalPlayer.Character.Position.Around2D(20f), 0);
                 }
 
                 GameFiber.Yield();
             }
-            return sp;
+            return spawnPoint;
         }
     }
 }
