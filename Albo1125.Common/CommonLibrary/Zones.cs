@@ -1,15 +1,21 @@
 ﻿using Rage;
 using Rage.Native;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Albo1125.Common.CommonLibrary
 {
+    /// <summary>
+    /// The Zones class provides utility methods for obtaining information about different zones and districts in the game world.
+    /// </summary>
+    /// <remarks>
+    /// This class is part of the CommonLibrary namespace in the Albo1125.Common.CommonLibrary assembly.
+    /// </remarks>
     public static class Zones
     {
+        /// <summary>
+        /// Enum representing different zones in the world.
+        /// </summary>
         public enum EWorldZone
         {
             NULL,
@@ -45,7 +51,7 @@ namespace Albo1125.Common.CommonLibrary
             ELGORL,
             ELYSIAN,
             GALFISH,
-            golf,
+            Golf,
             GRAPES,
             GREATC,
             HARMO,
@@ -106,62 +112,82 @@ namespace Albo1125.Common.CommonLibrary
         }
 
 
-
+        /// <summary>
+        /// Gets the lower case name of the zone for the specified Entity.
+        /// </summary>
+        /// <param name="entity">The Entity object for which to get the zone name.</param>
+        /// <returns>The lower case name of the zone for the specified Entity.</returns>
         public static string GetLowerZoneNameForEntity(this Entity entity)
         {
             return GetZoneName(GetZone(entity.Position)).ToLower();
         }
+
+        /// <summary>
+        /// Gets the lowercase name of the zone at the specified position.
+        /// </summary>
+        /// <param name="pos">The position of the zone.</param>
+        /// <returns>The lowercase name of the zone.</returns>
         public static string GetLowerZoneName(Vector3 pos)
         {
             return GetZoneName(GetZone(pos)).ToLower();
         }
+
+        /// <summary>
+        /// Returns the name of a zone based on the given position.
+        /// </summary>
+        /// <param name="pos">The position for which to obtain the zone name.</param>
+        /// <returns>The name of the zone.</returns>
         public static string GetZoneName(Vector3 pos)
         {
             return GetZoneName(GetZone(pos));
         }
 
 
-        public static EWorldZone GetZone(Vector3 Position)
+        /// <summary>
+        /// Returns the zone name of the given position.
+        /// </summary>
+        /// <param name="position">The coordinates of the position.</param>
+        /// <returns>The name of the zone as a string.</returns>
+        public static EWorldZone GetZone(Vector3 position)
         {
-            string zoneId = NativeFunction.Natives.GET_NAME_OF_ZONE<string>(Position.X, Position.Y, Position.Z);
+            string zoneId = NativeFunction.Natives.GET_NAME_OF_ZONE<string>(position.X, position.Y, position.Z);
 
-            EWorldZone result;
-            if (Enum.TryParse<EWorldZone>(zoneId, true, out result))
-            {
-                return result;
-            }
-            else
-            {
-                return EWorldZone.NULL;
-            }
+            return Enum.TryParse<EWorldZone>(zoneId, true, out var result) ? result : EWorldZone.NULL;
         }
-        private static string[] LosSantosCountyZoneNames = new string[] {"tongva hills", "chumash", "banham canyon drive", "banham canyon", "san andreas", "richman glen", "tongva valley", "great chaparral", "vinewood hills",
+        
+        private static readonly string[] LosSantosCountyZoneNames = {"tongva hills", "chumash", "banham canyon drive", "banham canyon", "san andreas", "richman glen", "tongva valley", "great chaparral", "vinewood hills",
         "tataviam mountains", "noose hq", "palomino highlands"};
 
+        /// <summary>
+        /// Represents the districts of the game world.
+        /// </summary>
         public enum WorldDistricts { City, LosSantosCountryside, BlaineCounty, Water }
-        public static WorldDistricts GetWorldDistrict(this Vector3 pos)
+
+        /// <summary>
+        /// Get the world district based on the given position.
+        /// </summary>
+        /// <param name="position">The position to determine the world district for.</param>
+        /// <returns>The world district of the specified position.</returns>
+        public static WorldDistricts GetWorldDistrict(this Vector3 position)
         {
-            if (pos.IsPointOnWater()) { return WorldDistricts.Water; }
-            uint zoneHash = Rage.Native.NativeFunction.CallByHash<uint>(0x7ee64d51e8498728, pos.X, pos.Y, pos.Z);
+            if (position.IsPointOnWater()) { return WorldDistricts.Water; }
+            var zoneHash = NativeFunction.CallByHash<uint>(0x7ee64d51e8498728, position.X, position.Y, position.Z);
 
 
             if (Game.GetHashKey("city") == zoneHash)
             {
                 return WorldDistricts.City;
             }
-            else if (LosSantosCountyZoneNames.Contains(GetLowerZoneName(pos)))
-            {
-                return WorldDistricts.LosSantosCountryside;
-            }
-            else
-            {
-                return WorldDistricts.BlaineCounty;
-            }
+
+            return LosSantosCountyZoneNames.Contains(GetLowerZoneName(position)) ? WorldDistricts.LosSantosCountryside : WorldDistricts.BlaineCounty;
         }
 
-        
 
-
+        /// <summary>
+        /// Gets the zone name for a given world zone.
+        /// </summary>
+        /// <param name="zone">The world zone.</param>
+        /// <returns>The zone name.</returns>
         public static string GetZoneName(EWorldZone zone)
         {
             switch (zone)
@@ -228,7 +254,7 @@ namespace Albo1125.Common.CommonLibrary
                     return "Elysian Island";
                 case EWorldZone.GALFISH:
                     return "Galilee";
-                case EWorldZone.golf:
+                case EWorldZone.Golf:
                     return "GWC and Golfing Society";
                 case EWorldZone.GRAPES:
                     return "Grapeseed";
@@ -344,8 +370,11 @@ namespace Albo1125.Common.CommonLibrary
                     return "Port of South Los Santos";
                 case EWorldZone.ZQ_UAR:
                     return "Davis Quartz";
+                
+                case EWorldZone.NULL:
+                case EWorldZone.PROL:
                 default:
-                    return String.Empty;
+                    return string.Empty;
             }
         }
 
